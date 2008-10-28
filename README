@@ -1,0 +1,1 @@
+An implementation of the Mongo (http://www.mongodb.org) wire protocol in Standard ML.
