@@ -13,6 +13,7 @@ sig
     exception ConnectError of string
     val connect: string -> int -> int -> connection
     val getValue: mongo_document -> string -> mongo_value option
+    val toBSON: mongo_document -> Word8Vector.vector
 end;
 
 structure Mongo :> MONGO =
@@ -27,6 +28,7 @@ struct
     type mongo_document = (string * mongo_value) list
     type connection = Socket.active INetSock.stream_sock
     exception ConnectError of string
+    exception InternalError
     fun connect remote_host remote_port local_port =
         let
             val host_address = case NetHostDB.getByName remote_host of
@@ -52,5 +54,63 @@ struct
                 end
             else
                 NONE
+        end
+    fun dedup document =
+        let
+            fun contains list (elem:string) =
+                case list of
+                    hd::tl => if hd = elem then true else contains tl elem
+                  | nil => false
+            fun dedup_helper (document:mongo_document) seen =
+                case document of
+                    hd::tl => if contains seen (#1 hd) then dedup_helper tl seen else hd::dedup_helper tl seen
+                  | nil => nil
+        in
+            dedup_helper document nil
+        end
+    fun elementTypeFromName typeName =
+        case typeName of
+            "EOO" => Word8.fromInt 0
+          | "NUMBER" => Word8.fromInt 1
+          | "STRING" => Word8.fromInt 2
+          | "OBJECT" => Word8.fromInt 3
+          | "ARRAY" => Word8.fromInt 4
+          | "BINARY" => Word8.fromInt 5
+          | "UNDEFINED" => Word8.fromInt 6
+          | "OID" => Word8.fromInt 7
+          | "BOOLEAN" => Word8.fromInt 8
+          | "DATE" => Word8.fromInt 9
+          | "NULL" => Word8.fromInt 10
+          | "REGEX" => Word8.fromInt 11
+          | "REF" => Word8.fromInt 12
+          | "CODE" => Word8.fromInt 13
+          | _ => raise InternalError
+    fun elementType element =
+        case element of
+            Document _ => elementTypeFromName "OBJECT"
+          | Array _ => elementTypeFromName "ARRAY"
+          | Bool _ => elementTypeFromName "BOOLEAN"
+          | Int _ => elementTypeFromName "NUMBER"
+          | Float _ => elementTypeFromName "NUMBER"
+          | String _ => elementTypeFromName "STRING"
+    fun toCString s =
+        let
+            val s' = List.map (Word8.fromInt o ord) (explode s)
+        in
+            List.concat [s', [Word8.fromInt 0]]
+        end
+    fun elementToBSON name element =
+        let
+            val tp = elementType element
+            val name = toCString name
+        in
+            ()
+        end
+    fun toBSON document =
+        let
+            val document' = dedup document
+            val huh = [Word8.fromInt 5]
+        in
+            Word8Vector.fromList huh
         end
 end;
