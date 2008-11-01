@@ -99,18 +99,53 @@ struct
         in
             List.concat [s', [Word8.fromInt 0]]
         end
-    fun elementToBSON name element =
+    fun elementToBSON (name, element) =
         let
             val tp = elementType element
             val name = toCString name
         in
-            ()
+            [Word8.fromInt 5]
         end
+    fun makeList count element =
+        if count = 0 then
+            nil
+        else
+            element::(makeList (count - 1) element)
+    fun padLeft list count padding =
+        let
+            val len = length list
+        in
+            if len >= count then
+                List.take(list, count)
+            else
+                (makeList (count - len) padding) @ list
+        end
+    fun intToWord8List i =
+        let
+            fun helper i l =
+                if i = 0 then
+                    l
+                else
+                    let
+                        val w = Word8.fromInt (IntInf.toInt i)
+                        val rem = IntInf.~>> (i, Word.fromInt 8)
+                    in
+                        helper rem (w::l)
+                    end
+            val l = helper (Int.toLarge i) nil
+        in
+            padLeft l 4 (Word8.fromInt 0)
+        end
+    val eoo = Word8.fromInt 0
     fun toBSON document =
         let
             val document' = dedup document
-            val huh = [Word8.fromInt 5]
+            val objectData = List.concat(List.map elementToBSON document')
+            (* overhead for the size bytes and eoo.
+             * TODO should this include the eoo byte or not? *)
+            val overhead = 5
+            val size = intToWord8List (length objectData + overhead)
         in
-            Word8Vector.fromList huh
+            Word8Vector.fromList (List.concat [size, objectData, [eoo]])
         end
 end;
