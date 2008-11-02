@@ -13,6 +13,7 @@ sig
     exception ConnectError of string
     val connect: string -> int -> int -> connection
     val getValue: mongo_document -> string -> mongo_value option
+    val printBSON: Word8.word list -> unit
     val toBSON: mongo_document -> Word8Vector.vector
 end;
 
@@ -137,6 +138,17 @@ struct
             padLeft l 4 (Word8.fromInt 0)
         end
     val eoo = Word8.fromInt 0
+    fun printBSON bson =
+        let
+            fun printHelper lineNumber bson =
+                case bson of
+                    nil => ()
+                  | hd::tl =>
+                    (print ((Int.toString lineNumber) ^ " " ^ (Word8.toString hd) ^ "\n");
+                     printHelper (lineNumber + 1) tl)
+        in
+            printHelper 0 bson
+        end
     fun toBSON document =
         let
             val document' = dedup document
@@ -146,6 +158,7 @@ struct
             val overhead = 5
             val size = intToWord8List (length objectData + overhead)
         in
+            printBSON (List.concat [size, objectData, [eoo]]);
             Word8Vector.fromList (List.concat [size, objectData, [eoo]])
         end
 end;
