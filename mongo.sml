@@ -8,13 +8,13 @@ sig
       | Int of IntInf.int
       | Float of real
       | String of string
-    (* TODO functions for creating mongo documents, so this type doesn't need to be transparent *)
-    type mongo_document = (string * mongo_value) list
+    type mongo_document
     type bson
     type connection
     exception ConnectError of string
     val connect: string -> int -> int -> connection
     val getValue: mongo_document -> string -> mongo_value option
+    val docFromList: (string * mongo_value) list -> mongo_document
     val printBSON: bson -> unit
     val toBSON: mongo_document -> bson
 end;
@@ -173,4 +173,5 @@ struct
         in
             List.concat [size, objectData, [eoo]]
         end
+    fun docFromList l = l
 end;
