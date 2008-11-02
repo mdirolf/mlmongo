@@ -8,13 +8,15 @@ sig
       | Int of IntInf.int
       | Float of real
       | String of string
+    (* TODO functions for creating mongo documents, so this type doesn't need to be transparent *)
     type mongo_document = (string * mongo_value) list
+    type bson
     type connection
     exception ConnectError of string
     val connect: string -> int -> int -> connection
     val getValue: mongo_document -> string -> mongo_value option
-    val printBSON: Word8.word list -> unit
-    val toBSON: mongo_document -> Word8Vector.vector
+    val printBSON: bson -> unit
+    val toBSON: mongo_document -> bson
 end;
 
 structure Mongo :> MONGO =
@@ -27,9 +29,11 @@ struct
       | Float of real
       | String of string
     type mongo_document = (string * mongo_value) list
+    type bson = Word8.word list
     type connection = Socket.active INetSock.stream_sock
     exception ConnectError of string
     exception InternalError
+    exception UnimplementedError
     fun connect remote_host remote_port local_port =
         let
             val host_address = case NetHostDB.getByName remote_host of
@@ -94,18 +98,12 @@ struct
           | Int _ => elementTypeFromName "NUMBER"
           | Float _ => elementTypeFromName "NUMBER"
           | String _ => elementTypeFromName "STRING"
+    (* TODO this ought to be UTF-8 encoded *)
     fun toCString s =
         let
             val s' = List.map (Word8.fromInt o ord) (explode s)
         in
             List.concat [s', [Word8.fromInt 0]]
-        end
-    fun elementToBSON (name, element) =
-        let
-            val tp = elementType element
-            val name = toCString name
-        in
-            [Word8.fromInt 5]
         end
     fun makeList count element =
         if count = 0 then
@@ -149,7 +147,22 @@ struct
         in
             printHelper 0 bson
         end
-    fun toBSON document =
+    fun elementToBSON (name, element) =
+        let
+            val tp = elementType element
+            val name = toCString name
+            (* TODO finish the unimplemented cases *)
+            val element = case element of
+                              Document d => toBSON d
+                            | Array a => raise UnimplementedError
+                            | Bool b => if b then [Word8.fromInt 1] else [Word8.fromInt 0]
+                            | Int i => raise UnimplementedError
+                            | Float f => raise UnimplementedError
+                            | String s => raise UnimplementedError
+        in
+            (tp::name) @ element
+        end
+    and toBSON document =
         let
             val document' = dedup document
             val objectData = List.concat(List.map elementToBSON document')
@@ -158,7 +171,6 @@ struct
             val overhead = 5
             val size = intToWord8List (length objectData + overhead)
         in
-            printBSON (List.concat [size, objectData, [eoo]]);
-            Word8Vector.fromList (List.concat [size, objectData, [eoo]])
+            List.concat [size, objectData, [eoo]]
         end
 end;
