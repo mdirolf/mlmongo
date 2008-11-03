@@ -138,11 +138,18 @@ struct
     val eoo = Word8.fromInt 0
     fun printBSON bson =
         let
+            fun padStringLeft string count char =
+                String.implode (padLeft (String.explode string) count char)
             fun printHelper lineNumber bson =
                 case bson of
-                    nil => ()
+                    nil => print "\n"
                   | hd::tl =>
-                    (print ((Int.toString lineNumber) ^ " " ^ (Word8.toString hd) ^ "\n");
+                    (if lineNumber mod 8 = 0 then
+                        print ("\n" ^ (padStringLeft (Int.toString lineNumber) 4 #" ") ^ ":  ")
+                    else
+                        print " "
+                    ;
+                    print (padStringLeft (Word8.toString hd) 2 #"0");
                      printHelper (lineNumber + 1) tl)
         in
             printHelper 0 bson
