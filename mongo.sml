@@ -151,10 +151,19 @@ struct
         let
             val tp = elementType element
             val name = toCString name
+            fun listAsArray list =
+                let
+                    fun helper l index =
+                        case l of
+                            nil => nil
+                          | hd::tl => (Int.toString index, hd)::(helper tl (index + 1))
+                in
+                    helper list 0
+                end
             (* TODO finish the unimplemented cases *)
             val element = case element of
                               Document d => toBSON d
-                            | Array a => raise UnimplementedError
+                            | Array a => toBSON (listAsArray a)
                             | Bool b => if b then [Word8.fromInt 1] else [Word8.fromInt 0]
                             | Int i => raise UnimplementedError
                             | Float f => raise UnimplementedError
