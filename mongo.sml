@@ -147,9 +147,8 @@ struct
                     (if lineNumber mod 8 = 0 then
                         print ("\n" ^ (padStringLeft (Int.toString lineNumber) 4 #" ") ^ ":  ")
                     else
-                        print " "
-                    ;
-                    print (padStringLeft (Word8.toString hd) 2 #"0");
+                        print " ";
+                     print (padStringLeft (Word8.toString hd) 2 #"0");
                      printHelper (lineNumber + 1) tl)
         in
             printHelper 0 bson
