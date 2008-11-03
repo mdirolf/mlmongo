@@ -1,6 +1,10 @@
 (* Copyright 2008 Michael Dirolf (mike@dirolf.com). All Rights Reserved. *)
 signature MONGO =
 sig
+    (* TODO seperate into different modules:
+     * BSON
+     * MongoDocument
+     * MongoDB *)
     datatype mongo_value =
         Document of (string * mongo_value) list
       | Array of mongo_value list
@@ -15,12 +19,17 @@ sig
     val connect: string -> int -> int -> connection
     val getValue: mongo_document -> string -> mongo_value option
     val docFromList: (string * mongo_value) list -> mongo_document
+    (* TODO implement this:
+     * val printMongoDocument: mongo_document -> unit *)
     val printBSON: bson -> unit
     val toBSON: mongo_document -> bson
+    (* TODO implement this:
+     * val fromBSON: bson -> mongo_document *)
 end;
 
 structure Mongo :> MONGO =
 struct
+    (* TODO tests *)
     datatype mongo_value =
         Document of (string * mongo_value) list
       | Array of mongo_value list
