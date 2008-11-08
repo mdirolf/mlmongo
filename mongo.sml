@@ -182,7 +182,12 @@ struct
                             | Bool b => if b then [Word8.fromInt 1] else [Word8.fromInt 0]
                             | Int i => raise UnimplementedError
                             | Float f => raise UnimplementedError
-                            | String s => raise UnimplementedError
+                            | String s =>
+                              let
+                                  val cs = toCString s
+                              in
+                                  intToWord8List(length cs) @ cs
+                              end
         in
             (tp::name) @ element
         end
