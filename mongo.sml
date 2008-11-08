@@ -9,7 +9,7 @@ sig
         Document of (string * mongo_value) list
       | Array of mongo_value list
       | Bool of bool
-      | Int of IntInf.int
+      | Int of int
       | Float of real
       | String of string
     type mongo_document
@@ -34,7 +34,7 @@ struct
         Document of (string * mongo_value) list
       | Array of mongo_value list
       | Bool of bool
-      | Int of IntInf.int
+      | Int of int
       | Float of real
       | String of string
     type mongo_document = (string * mongo_value) list
@@ -98,13 +98,16 @@ struct
           | "REGEX" => Word8.fromInt 11
           | "REF" => Word8.fromInt 12
           | "CODE" => Word8.fromInt 13
+          | "SYMBOL" => Word8.fromInt 14
+          | "CODE_W_SCOPE" => Word8.fromInt 15
+          | "NUMBER_INT" => Word8.fromInt 16
           | _ => raise InternalError
     fun elementType element =
         case element of
             Document _ => elementTypeFromName "OBJECT"
           | Array _ => elementTypeFromName "ARRAY"
           | Bool _ => elementTypeFromName "BOOLEAN"
-          | Int _ => elementTypeFromName "NUMBER"
+          | Int _ => elementTypeFromName "NUMBER_INT"
           | Float _ => elementTypeFromName "NUMBER"
           | String _ => elementTypeFromName "STRING"
     (* TODO this ought to be UTF-8 encoded *)
@@ -180,13 +183,13 @@ struct
                               Document d => toBSON d
                             | Array a => toBSON (listAsArray a)
                             | Bool b => if b then [Word8.fromInt 1] else [Word8.fromInt 0]
-                            | Int i => raise UnimplementedError
+                            | Int i => intToWord8List i
                             | Float f => raise UnimplementedError
                             | String s =>
                               let
                                   val cs = toCString s
                               in
-                                  intToWord8List(length cs) @ cs
+                                  intToWord8List (length cs) @ cs
                               end
         in
             (tp::name) @ element
