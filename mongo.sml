@@ -1,30 +1,9 @@
 (* Copyright 2008 Michael Dirolf (mike@dirolf.com). All Rights Reserved. *)
 signature MONGO =
 sig
-    (* TODO seperate into different modules:
-     * BSON
-     * MongoDocument
-     * MongoDB *)
-    datatype mongo_value =
-        Document of (string * mongo_value) list
-      | Array of mongo_value list
-      | Bool of bool
-      | Int of int
-      | Float of real
-      | String of string
-    type mongo_document
-    type bson
     type connection
     exception ConnectError of string
     val connect: string -> int -> int -> connection
-    val getValue: mongo_document -> string -> mongo_value option
-    val docFromList: (string * mongo_value) list -> mongo_document
-    (* TODO implement this:
-     * val printMongoDocument: mongo_document -> unit *)
-    val printBSON: bson -> unit
-    val toBSON: mongo_document -> bson
-    (* TODO implement this:
-     * val fromBSON: bson -> mongo_document *)
 end;
 
 structure Mongo :> MONGO =
@@ -55,19 +34,6 @@ struct
             Socket.bind (socket, local_address) handle SysErr => raise ConnectError ("Could not bind socket to port " ^ Int.toString local_port ^ ".");
             Socket.connect (socket, remote_address) handle SysErr => raise ConnectError ("Could not connect to mongo database at '" ^ remote_host ^ ":" ^ Int.toString remote_port ^ ".");
             socket
-        end
-    fun getValue (document: mongo_document) key =
-        let
-            val value = List.find (fn (s, _) => s = key) document
-        in
-            if Option.isSome value then
-                let
-                    val (_, result) = Option.valOf value
-                in
-                    SOME(result)
-                end
-            else
-                NONE
         end
     fun dedup document =
         let
@@ -178,13 +144,14 @@ struct
                 in
                     helper list 0
                 end
+            fun toList vec = Word8Vector.foldr (op ::) [] vec
             (* TODO finish the unimplemented cases *)
             val element = case element of
                               Document d => toBSON d
                             | Array a => toBSON (listAsArray a)
                             | Bool b => if b then [Word8.fromInt 1] else [Word8.fromInt 0]
                             | Int i => intToWord8List i
-                            | Float f => raise UnimplementedError
+                            | Float f => toList (PackRealLittle.toBytes f)
                             | String s =>
                               let
                                   val cs = toCString s
@@ -205,5 +172,4 @@ struct
         in
             List.concat [size, objectData, [eoo]]
         end
-    fun docFromList l = l
 end;
