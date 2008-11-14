@@ -124,7 +124,6 @@ struct
                     helper list 0
                 end
             fun toList vec = Word8Vector.foldr (op ::) [] vec
-            (* TODO finish the unimplemented cases *)
             val element = case element of
                               MD.Document d => fromDocument (MD.fromList d)
                             | MD.Array a => fromDocument (MD.fromList (listAsArray a))
