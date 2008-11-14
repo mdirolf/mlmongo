@@ -1,0 +1,11 @@
+(* Copyright 2008 Michael Dirolf (mike@dirolf.com). All Rights Reserved. *)
+Library
+        structure MongoDoc
+        structure BSON
+        structure Mongo
+is
+        $/basis.cm
+        pack_real/pack-real.cm
+        mongo-doc.sml
+        bson.sml
+        mongo.sml
