@@ -37,9 +37,10 @@ struct
                     nil => print "\n"
                   | hd::tl =>
                     (if lineNumber mod 8 = 0 then
-                        print ("\n" ^ (padStringLeft (Int.toString lineNumber) 4 #" ") ^ ":  ")
+                         (if lineNumber <> 0 then print "\n" else ();
+                          print ((padStringLeft (Int.toString lineNumber) 4 #" ") ^ ":  "))
                      else
-                        print " ";
+                         print " ";
                      print (padStringLeft (Word8.toString hd) 2 #"0");
                      printHelper (lineNumber + 1) tl)
         in
