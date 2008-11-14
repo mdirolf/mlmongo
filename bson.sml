@@ -93,23 +93,26 @@ struct
         in
             List.concat [s', [Word8.fromInt 0]]
         end
-    fun intToWord8List i =
-        let
-            fun helper i l =
-                if i = 0 then
-                    l
-                else
-                    let
-                        val w = Word8.fromInt (IntInf.toInt i)
-                        val rem = IntInf.~>> (i, Word.fromInt 8)
-                    in
-                        helper rem (w::l)
-                    end
-            val l = helper (Int.toLarge i) nil
-        in
-            padLeft l 4 (Word8.fromInt 0)
-        end
+    (* TODO better name, and use this more places *)
     val eoo = Word8.fromInt 0
+    fun intToWord8List int =
+        let
+            fun helper int count =
+                if count = 0 then
+                    nil
+                else
+                    if int = 0 then
+                        eoo::(helper 0 (count - 1))
+                    else
+                        let
+                            val word = Word8.fromInt (IntInf.toInt int)
+                            val int' = IntInf.~>> (int, Word.fromInt 8)
+                        in
+                            word::(helper int' (count - 1))
+                        end
+        in
+            helper (Int.toLarge int) 4
+        end
     fun elementToBSON (name, element) =
         let
             val tp = elementType element
