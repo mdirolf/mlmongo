@@ -39,7 +39,8 @@ struct
             else
                 NONE
         end
-    fun fromList l = l
-    fun toList d = d
-    fun print document = (print "hello world")
+    fun fromList list = list
+    fun toList document = document
+    (* TODO implement this *)
+    fun print document = raise UnimplementedError
 end

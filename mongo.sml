@@ -9,14 +9,6 @@ end;
 structure Mongo :> MONGO =
 struct
     (* TODO tests *)
-    datatype mongo_value =
-        Document of (string * mongo_value) list
-      | Array of mongo_value list
-      | Bool of bool
-      | Int of int
-      | Float of real
-      | String of string
-    type mongo_document = (string * mongo_value) list
     type bson = Word8.word list
     type connection = Socket.active INetSock.stream_sock
     exception ConnectError of string
