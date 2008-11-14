@@ -12,6 +12,7 @@ struct
     structure MD = MongoDoc
 
     type value = Word8.word list
+    exception InternalError
     exception UnimplementedError
     fun makeList count element =
         if count = 0 then
@@ -50,12 +51,12 @@ struct
                 case list of
                     hd::tl => if hd = elem then true else contains tl elem
                   | nil => false
-            fun dedup_helper (document:MD.document) seen =
+            fun dedup_helper (document: (string * MD.value) list) seen =
                 case document of
                     hd::tl => if contains seen (#1 hd) then dedup_helper tl seen else hd::dedup_helper tl seen
                   | nil => nil
         in
-            dedup_helper document nil
+            MD.fromList (dedup_helper (MD.toList document) nil)
         end
     fun elementTypeFromName typeName =
         case typeName of
@@ -79,12 +80,12 @@ struct
           | _ => raise InternalError
     fun elementType element =
         case element of
-            Document _ => elementTypeFromName "OBJECT"
-          | Array _ => elementTypeFromName "ARRAY"
-          | Bool _ => elementTypeFromName "BOOLEAN"
-          | Int _ => elementTypeFromName "NUMBER_INT"
-          | Float _ => elementTypeFromName "NUMBER"
-          | String _ => elementTypeFromName "STRING"
+            MD.Document _ => elementTypeFromName "OBJECT"
+          | MD.Array _ => elementTypeFromName "ARRAY"
+          | MD.Bool _ => elementTypeFromName "BOOLEAN"
+          | MD.Int _ => elementTypeFromName "NUMBER_INT"
+          | MD.Float _ => elementTypeFromName "NUMBER"
+          | MD.String _ => elementTypeFromName "STRING"
     (* TODO this ought to be UTF-8 encoded *)
     fun toCString s =
         let
@@ -125,12 +126,12 @@ struct
             fun toList vec = Word8Vector.foldr (op ::) [] vec
             (* TODO finish the unimplemented cases *)
             val element = case element of
-                              Document d => toBSON d
-                            | Array a => toBSON (listAsArray a)
-                            | Bool b => if b then [Word8.fromInt 1] else [Word8.fromInt 0]
-                            | Int i => intToWord8List i
-                            | Float f => toList (PackRealLittle.toBytes f)
-                            | String s =>
+                              MD.Document d => fromDocument (MD.fromList d)
+                            | MD.Array a => fromDocument (MD.fromList (listAsArray a))
+                            | MD.Bool b => if b then [Word8.fromInt 1] else [Word8.fromInt 0]
+                            | MD.Int i => intToWord8List i
+                            | MD.Float f => toList (PackRealLittle.toBytes f)
+                            | MD.String s =>
                               let
                                   val cs = toCString s
                               in
@@ -142,7 +143,8 @@ struct
     and fromDocument document =
         let
             val document' = dedup document
-            val objectData = List.concat(List.map elementToBSON document')
+            val document'' = MD.toList document'
+            val objectData = List.concat(List.map elementToBSON document'')
             (* overhead for the size bytes and eoo.
              * TODO should this include the eoo byte or not? *)
             val overhead = 5
