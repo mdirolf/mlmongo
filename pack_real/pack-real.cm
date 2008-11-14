@@ -1,10 +1,19 @@
+(* Copyright 2008 Michael Dirolf (mike@dirolf.com). All Rights Reserved. *)
+
 (* Copyright (c) 2007 Vesa Karvonen
  *
  * See the LICENSE file for details.
  *)
 
-group is
-   $/basis.cm
-   $c/c.cm
-   pack-real.sig
-   pack-real.sml
+Library
+        structure PackReal64Big
+        structure PackReal64Little
+        structure PackRealBig
+        structure PackRealLittle
+        structure PackLargeRealBig
+        structure PackLargeRealLittle
+is
+        $/basis.cm
+        $c/c.cm
+        pack-real.sig
+        pack-real.sml
