@@ -11,8 +11,6 @@ struct
     (* TODO tests *)
     type connection = Socket.active INetSock.stream_sock
     exception ConnectError of string
-    exception InternalError
-    exception UnimplementedError
     fun connect remote_host remote_port local_port =
         let
             val host_address = case NetHostDB.getByName remote_host of
