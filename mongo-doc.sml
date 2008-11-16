@@ -82,6 +82,28 @@ struct
         end
     fun fromList list = list
     fun toList document = document
-    (* TODO implement this *)
-    fun print document = raise UnimplementedError
+    fun indent width =
+        case width of
+            0 => ()
+          | n => (print " "; indent (n - 1))
+    fun printValue value =
+        case value of
+            Document d => raise UnimplementedError
+          | Array a => raise UnimplementedError
+          | Bool b => raise UnimplementedError
+          | Int i => print (Int.toString i)
+          | Float f => raise UnimplementedError
+          | String s => print ("\"" ^ s ^ "\"")
+    fun printBinding indentation (key, value) =
+        (indent indentation;
+         print (key ^ ": ");
+         printValue value;
+         print "\n")
+    fun printDocument indentation document =
+        case document of
+            nil => print "{}\n"
+          | _ => (print "{\n";
+                  List.map (printBinding (indentation + 4)) document;
+                  print "}\n")
+    fun print document = printDocument 0 document
 end
