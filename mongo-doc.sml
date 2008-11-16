@@ -65,7 +65,6 @@ struct
            | Float of real
            | String of string
     type document = (string * value) list
-    exception UnimplementedError
     fun valueForKey (document: document) key =
         let
             val value = List.find (fn (s, _) => s = key) document
@@ -79,6 +78,7 @@ struct
             else
                 NONE
         end
+    (* TODO somewhere we need to dedup nested Documents *)
     fun dedup document =
         let
             fun contains list (elem:string) =
@@ -101,11 +101,23 @@ struct
     fun printValue indentation value =
         case value of
             Document d => printDocument indentation d
-          | Array a => raise UnimplementedError
+          | Array a => printArray indentation a
           | Bool b => print (Bool.toString b)
           | Int i => print (Int.toString i)
           | Float f => print (Real.toString f)
           | String s => print ("\"" ^ s ^ "\"")
+    and printArrayValue indentation trail value =
+        (indent indentation;
+         printValue indentation value;
+         print (trail ^ "\n"))
+    and printArray indentation array =
+        case array of
+            nil => print "[]\n"
+          | _ => (print "[\n";
+                  List.map (printArrayValue (indentation + 4) ",") (List.take (array, List.length array - 1));
+                  printArrayValue (indentation + 4) "" (List.last array);
+                  indent indentation;
+                  print "]")
     and printBinding indentation trail (key, value) =
         (indent indentation;
          print (key ^ ": ");
