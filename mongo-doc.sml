@@ -7,6 +7,7 @@
  * updating, getting data from, and printing Mongo documents.
  *)
 (* TODO mongo docs should guarantee no duplicates *)
+(* TODO make all function declarations anonymous *)
 signature MONGO_DOC =
 sig
     (**
