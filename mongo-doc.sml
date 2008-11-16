@@ -43,7 +43,7 @@ sig
      *
      * Note: toList (fromList l) will not necessarily be identical to l.
      *       The result of toList is guaranteed to not contain more than
-     *       one pair with a given key. (TODO this is not true!)
+     *       one pair with a given key.
      * @param document a Mongo document
      * @return a list of the (key, value) pairs that make up the document
      *)
