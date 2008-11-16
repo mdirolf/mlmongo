@@ -81,7 +81,20 @@ struct
             else
                 NONE
         end
-    fun fromList list = list
+    fun dedup document =
+        let
+            fun contains list (elem:string) =
+                case list of
+                    hd::tl => if hd = elem then true else contains tl elem
+                  | nil => false
+            fun dedup_helper (document: document) seen =
+                case document of
+                    hd::tl => if contains seen (#1 hd) then dedup_helper tl seen else hd::dedup_helper tl ((#1 hd)::seen)
+                  | nil => nil
+        in
+            dedup_helper document nil
+        end
+    fun fromList list = dedup list
     fun toList document = document
     fun indent width =
         case width of
