@@ -94,16 +94,17 @@ struct
           | Int i => print (Int.toString i)
           | Float f => raise UnimplementedError
           | String s => print ("\"" ^ s ^ "\"")
-    fun printBinding indentation (key, value) =
+    fun printBinding indentation trail (key, value) =
         (indent indentation;
          print (key ^ ": ");
          printValue value;
-         print "\n")
+         print (trail ^ "\n"))
     fun printDocument indentation document =
         case document of
             nil => print "{}\n"
           | _ => (print "{\n";
-                  List.map (printBinding (indentation + 4)) document;
+                  List.map (printBinding (indentation + 4) ",") (List.take (document, List.length document - 1));
+                  printBinding (indentation + 4) "" (List.last document);
                   print "}\n")
     fun print document = printDocument 0 document
 end
