@@ -148,8 +148,7 @@ struct
             val document' = dedup document
             val document'' = MD.toList document'
             val objectData = List.concat(List.map elementToBSON document'')
-            (* overhead for the size bytes and eoo.
-             * TODO should this include the eoo byte or not? *)
+            (* overhead for the size bytes and eoo *)
             val overhead = 5
             val size = intToWord8List (length objectData + overhead)
         in
