@@ -86,25 +86,26 @@ struct
         case width of
             0 => ()
           | n => (print " "; indent (n - 1))
-    fun printValue value =
+    fun printValue indentation value =
         case value of
-            Document d => raise UnimplementedError
+            Document d => printDocument indentation d
           | Array a => raise UnimplementedError
           | Bool b => print (Bool.toString b)
           | Int i => print (Int.toString i)
           | Float f => print (Real.toString f)
           | String s => print ("\"" ^ s ^ "\"")
-    fun printBinding indentation trail (key, value) =
+    and printBinding indentation trail (key, value) =
         (indent indentation;
          print (key ^ ": ");
-         printValue value;
+         printValue indentation value;
          print (trail ^ "\n"))
-    fun printDocument indentation document =
+    and printDocument indentation document =
         case document of
             nil => print "{}\n"
           | _ => (print "{\n";
                   List.map (printBinding (indentation + 4) ",") (List.take (document, List.length document - 1));
                   printBinding (indentation + 4) "" (List.last document);
-                  print "}\n")
-    fun print document = printDocument 0 document
+                  indent indentation;
+                  print "}")
+    val print = fn document => (printDocument 0 document; print "\n")
 end
