@@ -90,9 +90,9 @@ struct
         case value of
             Document d => raise UnimplementedError
           | Array a => raise UnimplementedError
-          | Bool b => raise UnimplementedError
+          | Bool b => print (Bool.toString b)
           | Int i => print (Int.toString i)
-          | Float f => raise UnimplementedError
+          | Float f => print (Real.toString f)
           | String s => print ("\"" ^ s ^ "\"")
     fun printBinding indentation trail (key, value) =
         (indent indentation;
