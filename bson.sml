@@ -14,6 +14,7 @@ struct
     type value = Word8.word list
     exception InternalError
     exception UnimplementedError
+    val zeroByte = Word8.fromInt 0
     fun makeList count element =
         if count = 0 then
             nil
@@ -92,10 +93,8 @@ struct
         let
             val s' = List.map (Word8.fromInt o ord) (explode s)
         in
-            List.concat [s', [Word8.fromInt 0]]
+            List.concat [s', [zeroByte]]
         end
-    (* TODO better name, and use this more places *)
-    val eoo = Word8.fromInt 0
     fun intToWord8List int =
         let
             fun helper int count =
@@ -103,7 +102,7 @@ struct
                     nil
                 else
                     if int = 0 then
-                        eoo::(helper 0 (count - 1))
+                        zeroByte::(helper 0 (count - 1))
                     else
                         let
                             val word = Word8.fromInt (IntInf.toInt int)
@@ -131,7 +130,7 @@ struct
             val element = case element of
                               MD.Document d => fromDocument (MD.fromList d)
                             | MD.Array a => fromDocument (MD.fromList (listAsArray a))
-                            | MD.Bool b => if b then [Word8.fromInt 1] else [Word8.fromInt 0]
+                            | MD.Bool b => if b then [Word8.fromInt 1] else [zeroByte]
                             | MD.Int i => intToWord8List i
                             | MD.Float f => toList (PackRealLittle.toBytes f)
                             | MD.String s =>
@@ -152,7 +151,7 @@ struct
             val overhead = 5
             val size = intToWord8List (length objectData + overhead)
         in
-            List.concat [size, objectData, [eoo]]
+            List.concat [size, objectData, [zeroByte]]
         end
     fun toDocument value = raise UnimplementedError
 end
