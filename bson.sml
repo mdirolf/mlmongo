@@ -47,19 +47,6 @@ struct
         in
             printHelper 0 bson
         end
-    fun dedup document =
-        let
-            fun contains list (elem:string) =
-                case list of
-                    hd::tl => if hd = elem then true else contains tl elem
-                  | nil => false
-            fun dedup_helper (document: (string * MD.value) list) seen =
-                case document of
-                    hd::tl => if contains seen (#1 hd) then dedup_helper tl seen else hd::dedup_helper tl seen
-                  | nil => nil
-        in
-            MD.fromList (dedup_helper (MD.toList document) nil)
-        end
     fun elementTypeFromName typeName =
         case typeName of
             "EOO" => Word8.fromInt 0
@@ -144,9 +131,8 @@ struct
         end
     and fromDocument document =
         let
-            val document' = dedup document
-            val document'' = MD.toList document'
-            val objectData = List.concat(List.map elementToBSON document'')
+            val document' = MD.toList document
+            val objectData = List.concat(List.map elementToBSON document')
             (* overhead for the size bytes and eoo *)
             val overhead = 5
             val size = intToWord8List (length objectData + overhead)
