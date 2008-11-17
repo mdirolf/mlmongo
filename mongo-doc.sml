@@ -22,6 +22,7 @@ sig
            | Int of int
            | Float of real
            | String of string
+(* TODO add a set function to set a (key, value) pair *)
     (**
      * Extract a value from a Mongo document.
      *
@@ -29,6 +30,8 @@ sig
      * @param key the key to look up
      * @return the value for the given key (NONE if no value exists for key)
      *)
+(* TODO test that valueForKey returns NONE when document doesn't contain key *)
+(* TODO test that valueForKey returns SOME when document does contain key *)
     val valueForKey: document -> string -> value option
     (**
      * Create a Mongo document for a list of (key, value) pairs.
@@ -36,6 +39,7 @@ sig
      * @param list a list of (key, value) pairs
      * @return a Mongo document containing those same pairs
      *)
+(* TODO test that [d has no duplicates ==> toList (fromList d) = d] *)
     val fromList: (string * value) list -> document
     (**
      * Create a list of (key, value) pairs from a Mongo document.
@@ -46,12 +50,15 @@ sig
      * @param document a Mongo document
      * @return a list of the (key, value) pairs that make up the document
      *)
+(* TODO test that [fromList (toList d) = d] *)
+(* TODO test that [toList d] contains no duplicates *)
     val toList: document -> (string * value) list
     (**
      * Pretty print a Mongo document.
      *
      * @param document a Mongo document
      *)
+(* TODO test pretty printing, somehow... *)
     val print: document -> unit
 end
 
