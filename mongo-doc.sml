@@ -9,19 +9,19 @@
 signature MONGO_DOC =
 sig
     (**
+     * A Mongo document.
+     *)
+    type document
+    (**
      * A value that can be stored in a Mongo document.
      *)
     datatype value =
-             Document of (string * value) list
+             Document of document
            | Array of value list
            | Bool of bool
            | Int of int
            | Float of real
            | String of string
-    (**
-     * A Mongo document.
-     *)
-    type document
     (**
      * Extract a value from a Mongo document.
      *
@@ -78,7 +78,9 @@ struct
             else
                 NONE
         end
-    (* TODO somewhere we need to dedup nested Documents *)
+    (* NOTE Nested documents are guaranteed to be already dedup-ed.
+     * We know this since there is no way to create a document with any
+     * duplicates in it. *)
     fun dedup document =
         let
             fun contains list (elem:string) =
