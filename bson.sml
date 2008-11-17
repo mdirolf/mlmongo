@@ -115,7 +115,7 @@ struct
                 end
             fun toList vec = Word8Vector.foldr (op ::) [] vec
             val element = case element of
-                              MD.Document d => fromDocument (MD.fromList d)
+                              MD.Document d => fromDocument d
                             | MD.Array a => fromDocument (MD.fromList (listAsArray a))
                             | MD.Bool b => if b then [Word8.fromInt 1] else [zeroByte]
                             | MD.Int i => intToWord8List i
