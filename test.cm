@@ -1,0 +1,7 @@
+(* Copyright 2008 Michael Dirolf (mike@dirolf.com). All Rights Reserved. *)
+Group is
+      mongo.cm
+      (* need to install qcheck for this to work... *)
+      $/qcheck.cm
+      $/basis.cm
+      test/mongo-doc.sml
