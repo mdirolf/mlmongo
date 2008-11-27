@@ -16,10 +16,4 @@ struct
     and genDocAsList n = Gen.list Gen.flip (Gen.zip (genString, genThickValue n))
     (* TODO what about generating documents that have repeats? is this even reasonable to do? *)
     and genDoc n = Gen.map MongoDoc.fromList (genDocAsList n)
-
-    fun toThenFromList document = MongoDoc.fromList (MongoDoc.toList document) = document
-
-    val _ = checkGen (genDoc 5, SOME MongoDoc.toString) ("toList then fromList == identity", pred toThenFromList)
 end
-
-

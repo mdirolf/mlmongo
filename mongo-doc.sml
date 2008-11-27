@@ -59,7 +59,7 @@ sig
      * @param document a Mongo document
      *)
 (* TODO test pretty printing, somehow... *)
-    val toString: document -> string
+    val print: document -> unit
 end
 
 structure MongoDoc :> MONGO_DOC =
@@ -105,35 +105,40 @@ struct
     fun toList document = document
     fun indent width =
         case width of
-            0 => ""
-          | n => " " ^ indent (n - 1)
-    (* TODO change names to show that we aren't printing anymore. *)
+            0 => ()
+          | n => (print " "; indent (n - 1))
     fun printValue indentation value =
         case value of
             Document d => printDocument indentation d
           | Array a => printArray indentation a
-          | Bool b => Bool.toString b
-          | Int i => Int.toString i
-          | Float f => Real.toString f
-          | String s => "\"" ^ s ^ "\""
-    and printArrayValue indentation trail value = indent indentation ^ printValue indentation value ^ trail ^ "\n"
+          | Bool b => print (Bool.toString b)
+          | Int i => print (Int.toString i)
+          | Float f => print (Real.toString f)
+          | String s => print ("\"" ^ s ^ "\"")
+    and printArrayValue indentation trail value =
+        (indent indentation;
+         printValue indentation value;
+         print (trail ^ "\n"))
     and printArray indentation array =
         case array of
-            nil => "[]\n"
-          | _ => "[\n" ^
-                 String.concat (List.map (printArrayValue (indentation + 4) ",") (List.take (array, List.length array - 1))) ^
-                 printArrayValue (indentation + 4) "" (List.last array) ^
-                 indent indentation ^
-                 "]"
+            nil => print "[]\n"
+          | _ => (print "[\n";
+                  List.map (printArrayValue (indentation + 4) ",") (List.take (array, List.length array - 1));
+                  printArrayValue (indentation + 4) "" (List.last array);
+                  indent indentation;
+                  print "]")
     and printBinding indentation trail (key, value) =
-        indent indentation ^ key ^ ": " ^
-        printValue indentation value ^ trail ^ "\n"
+        (indent indentation;
+         print (key ^ ": ");
+         printValue indentation value;
+         print (trail ^ "\n"))
     and printDocument indentation document =
         case document of
-            nil => "{}\n"
-          | _ => "{\n" ^
-                 String.concat (List.map (printBinding (indentation + 4) ",") (List.take (document, List.length document - 1))) ^
-                 printBinding (indentation + 4) "" (List.last document) ^
-                 indent indentation ^ "}"
-    fun toString document = (printDocument 0 document) ^ "\n"
+            nil => print "{}\n"
+          | _ => (print "{\n";
+                  List.map (printBinding (indentation + 4) ",") (List.take (document, List.length document - 1));
+                  printBinding (indentation + 4) "" (List.last document);
+                  indent indentation;
+                  print "}")
+    val print = fn document => (printDocument 0 document; print "\n")
 end
