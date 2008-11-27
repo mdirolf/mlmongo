@@ -22,7 +22,14 @@ sig
            | Int of int
            | Float of real
            | String of string
-    (* TODO add a set function to set a (key, value) pair *)
+    (**
+     * Set a (key, value) binding on a Mongo document.
+     *
+     * @param document document to add a binding to
+     * @param binding (key, value) pair specifying the binding to add
+     * @return the resulting document
+     *)
+    val setBinding: document -> string * value -> document
     (**
      * Extract a value from a Mongo document.
      *
@@ -75,14 +82,14 @@ sig
      *)
     val toString: document -> string
     (**
-     * Check that two documents are "close" to being equal.
+     * Check if two documents are equal.
      *
      * Documents cannot be an equality type since they contain reals.
      * @param document1 a Mongo document
      * @param document2 a Mongo document
-     * @return a bool indicating if the two documents are "close"
+     * @return a bool indicating if the two documents are equal
      *)
-    val close: document -> document -> bool
+    val equal: document -> document -> bool
 end
 
 structure MongoDoc :> MONGO_DOC =
@@ -95,6 +102,8 @@ struct
            | Float of real
            | String of string
     type document = (string * value) list
+    (* TODO fix this *)
+    fun setBinding document (key, value) = document
     fun valueForKey (document: document) key =
         let
             val value = List.find (fn (s, _) => s = key) document
@@ -161,13 +170,13 @@ struct
                  printBinding (indentation + 4) "" (List.last document) ^
                  indent indentation ^ "}"
     fun toString document = (printDocument 0 document) ^ "\n"
-    fun closeValue value1 value2 =
+    fun equalValue value1 value2 =
         case value1 of
             Document d1 => (case value2 of
-                                Document d2 => close d1 d2
+                                Document d2 => equal d1 d2
                               | _ => false)
           | Array a1 => (case value2 of
-                             Array a2 => List.all (fn (a,b) => closeValue a b) (ListPair.zip (a1, a2))
+                             Array a2 => List.all (fn (a,b) => equalValue a b) (ListPair.zip (a1, a2))
                            | _ => false)
           | Bool b1 => (case value2 of
                             Bool b2 => b1 = b2
@@ -186,13 +195,13 @@ struct
             val value2 = valueForKey document key
         in
             Option.isSome value2
-            andalso closeValue value1 (Option.valOf value2)
+            andalso equalValue value1 (Option.valOf value2)
         end
-    and close document1 document2 =
+    and equal document1 document2 =
         case document1 of
             nil => (case document2 of
                         nil => true
                       | _ => false)
           | (key, value)::tl => bindingInDoc (key, value) document2
-                      andalso close tl (removeKey document2 key)
+                      andalso equal tl (removeKey document2 key)
 end

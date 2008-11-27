@@ -6,7 +6,7 @@ struct
     (* generators *)
     (* TODO parameterize genString (for length)? *)
     val genString = Gen.choose #[Gen.lift "test",
-                                 Gen.string (Gen.range (1, 20), Gen.charRange (#"a", #"z"))]
+                                 Gen.string (Gen.range (0, 20), Gen.charRange (#"a", #"z"))]
     val genFlatValue = Gen.choose #[Gen.map MongoDoc.Bool Gen.flip,
                                     Gen.map MongoDoc.Int Gen.Int.int,
                                     Gen.map MongoDoc.Float Gen.Real.real,
@@ -21,13 +21,13 @@ struct
     and genDoc n = Gen.map MongoDoc.fromList (genDocAsList n)
 
     (* test cases *)
-    fun closeToSelf document = MongoDoc.close document document
+    fun equalToSelf document = MongoDoc.equal document document
     fun notBothEmpty (x, y) = Bool.not (MongoDoc.isEmpty x)
                               orelse Bool.not (MongoDoc.isEmpty y)
-    fun notClose (document1, document2) = Bool.not (MongoDoc.close document1 document2)
+    fun notEqual (document1, document2) = Bool.not (MongoDoc.equal document1 document2)
     (* NOTE this isn't ALWAYS true. but things are random enough that it should be, unless both documents are empty. *)
-    val notCloseToRandom = notBothEmpty ==> notClose
-    fun toThenFromList document = MongoDoc.close (MongoDoc.fromList (MongoDoc.toList document)) document
+    val notEqualToRandom = notBothEmpty ==> notEqual
+    fun toThenFromList document = MongoDoc.equal (MongoDoc.fromList (MongoDoc.toList document)) document
     fun contains list (elem:string) =
         case list of
             hd::tl => if hd = elem then true else contains tl elem
@@ -46,8 +46,8 @@ struct
     val docPair = (Gen.zip (genDoc 5, genDoc 5), SOME (fn (x,y) => MongoDoc.toString x ^ ", " ^ MongoDoc.toString y))
 
     (* run the tests *)
-    val _ = checkGen doc ("a document is close to itself", pred closeToSelf)
-    val _ = checkGen docPair ("two random documents are not close", notCloseToRandom)
+    val _ = checkGen doc ("a document is equal to itself", pred equalToSelf)
+    val _ = checkGen docPair ("two random documents are not equal", notEqualToRandom)
     val _ = checkGen doc ("fromList o toList == identity", pred toThenFromList)
     val _ = checkGen doc ("toList contains no duplicates", pred noDups)
 end
