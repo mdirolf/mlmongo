@@ -1,7 +1,7 @@
 (* Copyright 2008 Michael Dirolf (mike@dirolf.com). All Rights Reserved. *)
 structure TestMongoDoc =
 struct
-    open QCheck
+    open QCheck infix ==>
 
     (* generators *)
     (* TODO parameterize genString (for length)? *)
@@ -21,7 +21,11 @@ struct
 
     (* test cases *)
     fun closeToSelf document = MongoDoc.close document document
-    fun notCloseToRandom (document1, document2) = Bool.not (MongoDoc.close document1 document2)
+    fun notBothEmpty (x, y) = Bool.not (MongoDoc.isEmpty x)
+                              orelse Bool.not (MongoDoc.isEmpty y)
+    fun notClose (document1, document2) = Bool.not (MongoDoc.close document1 document2)
+    (* NOTE this isn't ALWAYS true. but things are random enough that it should be, unless both documents are empty. *)
+    val notCloseToRandom = notBothEmpty ==> notClose
     fun toThenFromList document = MongoDoc.close (MongoDoc.fromList (MongoDoc.toList document)) document
 
     (* document test specs *)
@@ -30,7 +34,7 @@ struct
 
     (* run the tests *)
     val _ = checkGen doc ("a document is close to itself", pred closeToSelf)
-    val _ = checkGen docPair ("two random documents are not close", pred notCloseToRandom)
+    val _ = checkGen docPair ("two random documents are not close", notCloseToRandom)
     val _ = checkGen doc ("toList then fromList == identity", pred toThenFromList)
 end
 
