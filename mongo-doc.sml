@@ -34,6 +34,15 @@ sig
     (* TODO test that valueForKey returns SOME when document does contain key *)
     val valueForKey: document -> string -> value option
     (**
+     * Remove a key from a Mongo document.
+     *
+     * @param document the document to remove a key from
+     * @param key the key to remove
+     * @return a new document, with key removed if it was originally present
+     *)
+    (* TODO test for this *)
+    val removeKey: document -> string -> document
+    (**
      * Create a Mongo document for a list of (key, value) pairs.
      *
      * @param list a list of (key, value) pairs
@@ -96,6 +105,7 @@ struct
             else
                 NONE
         end
+    fun removeKey (document: document) key = List.filter (fn (s, _) => s <> key) document
     (* NOTE Nested documents are guaranteed to be already dedup-ed.
      * We know this since there is no way to create a document with any
      * duplicates in it. *)
@@ -147,6 +157,38 @@ struct
                  printBinding (indentation + 4) "" (List.last document) ^
                  indent indentation ^ "}"
     fun toString document = (printDocument 0 document) ^ "\n"
-    (* TODO implement this. *)
-    fun close document1 document2 = false
+    fun closeValue value1 value2 =
+        case value1 of
+            Document d1 => (case value2 of
+                                Document d2 => close d1 d2
+                              | _ => false)
+          | Array a1 => (case value2 of
+                             Array a2 => List.all (fn (a,b) => closeValue a b) (ListPair.zip (a1, a2))
+                           | _ => false)
+          | Bool b1 => (case value2 of
+                            Bool b2 => b1 = b2
+                          | _ => false)
+          | Int i1 => (case value2 of
+                           Int i2 => i1 = i2
+                         | _ => false)
+          | Float f1 => (case value2 of
+                             Float f2 => Real.== (f1, f2)
+                           | _ => false)
+          | String s1 => (case value2 of
+                              String s2 => s1 = s2
+                            | _ => false)
+    and bindingInDoc (key, value1) document =
+        let
+            val value2 = valueForKey document key
+        in
+            Option.isSome value2
+            andalso closeValue value1 (Option.valOf value2)
+        end
+    and close document1 document2 =
+        case document1 of
+            nil => (case document2 of
+                        nil => true
+                      | _ => false)
+          | (key, value)::tl => bindingInDoc (key, value) document2
+                      andalso close tl (removeKey document2 key)
 end
