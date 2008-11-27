@@ -12,9 +12,8 @@ struct
     fun genThickValue 0 = genFlatValue
       | genThickValue n = Gen.choose' #[(4, genFlatValue),
                                         (1, Gen.map MongoDoc.Array (Gen.list Gen.flip (genThickValue (n - 1)))),
-                                        (1, genThickValue (n - 1))]
-    (* TODO why did I choose 5. it is completely random. do something smarter. *)
-    val genDocAsList = Gen.list Gen.flip (Gen.zip (genString, genThickValue 5))
-    (* TODO figure out how repeats are being handled here... *)
-    val genDoc = Gen.map MongoDoc.fromList genDocAsList
+                                        (1, Gen.map MongoDoc.Document (genDoc (n - 1)))]
+    and genDocAsList n = Gen.list Gen.flip (Gen.zip (genString, genThickValue n))
+    (* TODO what about generating documents that have repeats? is this even reasonable to do? *)
+    and genDoc n = Gen.map MongoDoc.fromList (genDocAsList n)
 end
