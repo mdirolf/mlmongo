@@ -2,8 +2,10 @@
 structure TestMongoDoc =
 struct
     open QCheck
+
+    (* generators *)
     (* TODO parameterize genString (for length)? *)
-    val genString = Gen.string (Gen.range (0, 40), Gen.char)
+    val genString = Gen.string (Gen.range (1, 20), Gen.charRange (#"a", #"z"))
     val genFlatValue = Gen.choose #[Gen.map MongoDoc.Bool Gen.flip,
                                     Gen.map MongoDoc.Int Gen.Int.int,
                                     Gen.map MongoDoc.Float Gen.Real.real,
@@ -16,4 +18,20 @@ struct
     and genDocAsList n = Gen.list Gen.flip (Gen.zip (genString, genThickValue n))
     (* TODO what about generating documents that have repeats? is this even reasonable to do? *)
     and genDoc n = Gen.map MongoDoc.fromList (genDocAsList n)
+
+    (* test cases *)
+    fun closeToSelf document = MongoDoc.close document document
+    fun notCloseToRandom (document1, document2) = Bool.not (MongoDoc.close document1 document2)
+    fun toThenFromList document = MongoDoc.close (MongoDoc.fromList (MongoDoc.toList document)) document
+
+    (* document test specs *)
+    val doc = (genDoc 5, SOME MongoDoc.toString)
+    val docPair = (Gen.zip (genDoc 5, genDoc 5), SOME (fn (x,y) => MongoDoc.toString x ^ ", " ^ MongoDoc.toString y))
+
+    (* run the tests *)
+    val _ = checkGen doc ("a document is close to itself", pred closeToSelf)
+    val _ = checkGen docPair ("two random documents are not close", pred notCloseToRandom)
+    val _ = checkGen doc ("toList then fromList == identity", pred toThenFromList)
 end
+
+
