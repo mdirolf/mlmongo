@@ -29,6 +29,8 @@ sig
      * @param binding (key, value) pair specifying the binding to add
      * @return the resulting document
      *)
+    (* TODO test that setBinding then removeKey is identity *)
+    (* TODO test that valueForKey after setBinding works *)
     val setBinding: document -> string * value -> document
     (**
      * Extract a value from a Mongo document.
