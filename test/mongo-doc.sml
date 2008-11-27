@@ -35,7 +35,7 @@ struct
     (* run the tests *)
     val _ = checkGen doc ("a document is close to itself", pred closeToSelf)
     val _ = checkGen docPair ("two random documents are not close", notCloseToRandom)
-    val _ = checkGen doc ("toList then fromList == identity", pred toThenFromList)
+    val _ = checkGen doc ("fromList o toList == identity", pred toThenFromList)
 end
 
 
