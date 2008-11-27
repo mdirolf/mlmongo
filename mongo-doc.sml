@@ -22,7 +22,7 @@ sig
            | Int of int
            | Float of real
            | String of string
-(* TODO add a set function to set a (key, value) pair *)
+    (* TODO add a set function to set a (key, value) pair *)
     (**
      * Extract a value from a Mongo document.
      *
@@ -30,8 +30,8 @@ sig
      * @param key the key to look up
      * @return the value for the given key (NONE if no value exists for key)
      *)
-(* TODO test that valueForKey returns NONE when document doesn't contain key *)
-(* TODO test that valueForKey returns SOME when document does contain key *)
+    (* TODO test that valueForKey returns NONE when document doesn't contain key *)
+    (* TODO test that valueForKey returns SOME when document does contain key *)
     val valueForKey: document -> string -> value option
     (**
      * Create a Mongo document for a list of (key, value) pairs.
@@ -39,7 +39,7 @@ sig
      * @param list a list of (key, value) pairs
      * @return a Mongo document containing those same pairs
      *)
-(* TODO test that [d has no duplicates ==> toList (fromList d) = d] *)
+    (* TODO test that [d has no duplicates ==> toList (fromList d) = d] *)
     val fromList: (string * value) list -> document
     (**
      * Create a list of (key, value) pairs from a Mongo document.
@@ -50,16 +50,27 @@ sig
      * @param document a Mongo document
      * @return a list of the (key, value) pairs that make up the document
      *)
-(* TODO test that [fromList (toList d) = d] *)
-(* TODO test that [toList d] contains no duplicates *)
+    (* TODO test that [fromList (toList d) = d] *)
+    (* TODO test that [toList d] contains no duplicates *)
     val toList: document -> (string * value) list
     (**
-     * Pretty print a Mongo document.
+     * Pretty print a Mongo document to a string.
      *
      * @param document a Mongo document
+     * @return a string representation of the document
      *)
-(* TODO test pretty printing, somehow... *)
+    (* TODO test pretty printing, somehow... *)
     val toString: document -> string
+    (**
+     * Check that two documents are "close" to being equal.
+     *
+     * Documents cannot be an equality type since they contain reals.
+     * @param document1 a Mongo document
+     * @param document2 a Mongo document
+     * @return a bool indicating if the two documents are "close"
+     *)
+    (* TODO test that close works *)
+    val close: document -> document -> bool
 end
 
 structure MongoDoc :> MONGO_DOC =
@@ -119,7 +130,7 @@ struct
     and printArrayValue indentation trail value = indent indentation ^ printValue indentation value ^ trail ^ "\n"
     and printArray indentation array =
         case array of
-            nil => "[]\n"
+            nil => "[]"
           | _ => "[\n" ^
                  String.concat (List.map (printArrayValue (indentation + 4) ",") (List.take (array, List.length array - 1))) ^
                  printArrayValue (indentation + 4) "" (List.last array) ^
@@ -130,10 +141,12 @@ struct
         printValue indentation value ^ trail ^ "\n"
     and printDocument indentation document =
         case document of
-            nil => "{}\n"
+            nil => "{}"
           | _ => "{\n" ^
                  String.concat (List.map (printBinding (indentation + 4) ",") (List.take (document, List.length document - 1))) ^
                  printBinding (indentation + 4) "" (List.last document) ^
                  indent indentation ^ "}"
     fun toString document = (printDocument 0 document) ^ "\n"
+    (* TODO implement this. *)
+    fun close document1 document2 = false
 end
