@@ -66,7 +66,6 @@ sig
      * @param document a Mongo document
      * @return a list of the (key, value) pairs that make up the document
      *)
-    (* TODO test that [fromList (toList d) = d] *)
     (* TODO test that [toList d] contains no duplicates *)
     val toList: document -> (string * value) list
     (**
@@ -85,7 +84,6 @@ sig
      * @param document2 a Mongo document
      * @return a bool indicating if the two documents are "close"
      *)
-    (* TODO test that close works *)
     val close: document -> document -> bool
 end
 
