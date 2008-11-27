@@ -104,8 +104,6 @@ struct
            | Float of real
            | String of string
     type document = (string * value) list
-    (* TODO fix this *)
-    fun setBinding document (key, value) = document
     fun valueForKey (document: document) key =
         let
             val value = List.find (fn (s, _) => s = key) document
@@ -121,6 +119,7 @@ struct
         end
     fun isEmpty document = List.null document
     fun removeKey (document: document) key = List.filter (fn (s, _) => s <> key) document
+    fun setBinding document (key, value) = (key, value)::(removeKey document key)
     (* NOTE Nested documents are guaranteed to be already dedup-ed.
      * We know this since there is no way to create a document with any
      * duplicates in it. *)
