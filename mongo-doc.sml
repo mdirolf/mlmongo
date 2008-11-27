@@ -34,6 +34,13 @@ sig
     (* TODO test that valueForKey returns SOME when document does contain key *)
     val valueForKey: document -> string -> value option
     (**
+     * Indicates whether or not a Mongo document is empty.
+     *
+     * @param document the document to check
+     * @return true if the document is empty, false otherwise
+     *)
+    val isEmpty: document -> bool
+    (**
      * Remove a key from a Mongo document.
      *
      * @param document the document to remove a key from
@@ -105,6 +112,7 @@ struct
             else
                 NONE
         end
+    fun isEmpty document = List.null document
     fun removeKey (document: document) key = List.filter (fn (s, _) => s <> key) document
     (* NOTE Nested documents are guaranteed to be already dedup-ed.
      * We know this since there is no way to create a document with any
