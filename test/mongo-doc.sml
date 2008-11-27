@@ -5,7 +5,8 @@ struct
 
     (* generators *)
     (* TODO parameterize genString (for length)? *)
-    val genString = Gen.string (Gen.range (1, 20), Gen.charRange (#"a", #"z"))
+    val genString = Gen.choose #[Gen.lift "test",
+                                 Gen.string (Gen.range (1, 20), Gen.charRange (#"a", #"z"))]
     val genFlatValue = Gen.choose #[Gen.map MongoDoc.Bool Gen.flip,
                                     Gen.map MongoDoc.Int Gen.Int.int,
                                     Gen.map MongoDoc.Float Gen.Real.real,
@@ -27,6 +28,18 @@ struct
     (* NOTE this isn't ALWAYS true. but things are random enough that it should be, unless both documents are empty. *)
     val notCloseToRandom = notBothEmpty ==> notClose
     fun toThenFromList document = MongoDoc.close (MongoDoc.fromList (MongoDoc.toList document)) document
+    fun contains list (elem:string) =
+        case list of
+            hd::tl => if hd = elem then true else contains tl elem
+          | nil => false
+    fun noDupsInList toCheck seen = case toCheck of
+                                        nil => true
+                                      | (key, value)::tl => ((case value of
+                                                                  MongoDoc.Document d => noDups d
+                                                                | _ => true)
+                                                             andalso Bool.not (contains seen key))
+                                                            andalso noDupsInList tl (key::seen)
+    and noDups document = noDupsInList (MongoDoc.toList document) nil
 
     (* document test specs *)
     val doc = (genDoc 5, SOME MongoDoc.toString)
@@ -36,6 +49,7 @@ struct
     val _ = checkGen doc ("a document is close to itself", pred closeToSelf)
     val _ = checkGen docPair ("two random documents are not close", notCloseToRandom)
     val _ = checkGen doc ("fromList o toList == identity", pred toThenFromList)
+    val _ = checkGen doc ("toList contains no duplicates", pred noDups)
 end
 
 

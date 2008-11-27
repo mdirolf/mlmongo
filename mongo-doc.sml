@@ -66,7 +66,6 @@ sig
      * @param document a Mongo document
      * @return a list of the (key, value) pairs that make up the document
      *)
-    (* TODO test that [toList d] contains no duplicates *)
     val toList: document -> (string * value) list
     (**
      * Pretty print a Mongo document to a string.
@@ -74,7 +73,6 @@ sig
      * @param document a Mongo document
      * @return a string representation of the document
      *)
-    (* TODO test pretty printing, somehow... *)
     val toString: document -> string
     (**
      * Check that two documents are "close" to being equal.
