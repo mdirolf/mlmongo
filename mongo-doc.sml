@@ -29,7 +29,6 @@ sig
      * @param binding (key, value) pair specifying the binding to add
      * @return the resulting document
      *)
-    (* TODO test that setBinding then removeKey is identity *)
     (* TODO test that valueForKey after setBinding works *)
     val setBinding: document -> string * value -> document
     (**
@@ -42,6 +41,14 @@ sig
     (* TODO test that valueForKey returns NONE when document doesn't contain key *)
     (* TODO test that valueForKey returns SOME when document does contain key *)
     val valueForKey: document -> string -> value option
+    (**
+     * Indicates whether or not a Mongo document contains a key.
+     *
+     * @param document the document to inspect
+     * @param key the key to look up
+     * @return true if the document contains the key, false otherwise
+     *)
+    val hasKey: document -> string -> bool
     (**
      * Indicates whether or not a Mongo document is empty.
      *
@@ -117,6 +124,7 @@ struct
             else
                 NONE
         end
+    fun hasKey document key = Option.isSome (valueForKey document key)
     fun isEmpty document = List.null document
     fun removeKey (document: document) key = List.filter (fn (s, _) => s <> key) document
     fun setBinding document (key, value) = (key, value)::(removeKey document key)
