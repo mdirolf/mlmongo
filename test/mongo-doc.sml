@@ -47,6 +47,13 @@ struct
         in
             MongoDoc.equal document document'
         end
+    fun setThenCheck (document, (key, value)) =
+        let
+            val document' = MongoDoc.setBinding document (key, value)
+            val value' = Option.valOf (MongoDoc.valueForKey document' key)
+        in
+            MongoDoc.valueEqual value value'
+        end
 
     (* document test specs *)
     val doc = (genDoc 5, SOME MongoDoc.toString)
@@ -59,6 +66,7 @@ struct
     val _ = checkGen doc ("fromList o toList == identity", pred toThenFromList)
     val _ = checkGen doc ("toList contains no duplicates", pred noDups)
     val _ = checkGen docBindingPair ("removeKey o setBinding == identity", notAlreadyThere ==> setThenRemove)
+    val _ = checkGen docBindingPair ("setBinding then get value", pred setThenCheck)
 end
 
 

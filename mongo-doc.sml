@@ -29,7 +29,6 @@ sig
      * @param binding (key, value) pair specifying the binding to add
      * @return the resulting document
      *)
-    (* TODO test that valueForKey after setBinding works *)
     val setBinding: document -> string * value -> document
     (**
      * Extract a value from a Mongo document.
@@ -90,6 +89,10 @@ sig
      * @return a string representation of the document
      *)
     val toString: document -> string
+    (**
+     * Check if two values are equal.
+     *)
+    val valueEqual: value -> value -> bool
     (**
      * Check if two documents are equal.
      *
@@ -179,13 +182,13 @@ struct
                  printBinding (indentation + 4) "" (List.last document) ^
                  indent indentation ^ "}"
     fun toString document = (printDocument 0 document) ^ "\n"
-    fun equalValue value1 value2 =
+    fun valueEqual value1 value2 =
         case value1 of
             Document d1 => (case value2 of
                                 Document d2 => equal d1 d2
                               | _ => false)
           | Array a1 => (case value2 of
-                             Array a2 => List.all (fn (a,b) => equalValue a b) (ListPair.zip (a1, a2))
+                             Array a2 => List.all (fn (a,b) => valueEqual a b) (ListPair.zip (a1, a2))
                            | _ => false)
           | Bool b1 => (case value2 of
                             Bool b2 => b1 = b2
@@ -204,7 +207,7 @@ struct
             val value2 = valueForKey document key
         in
             Option.isSome value2
-            andalso equalValue value1 (Option.valOf value2)
+            andalso valueEqual value1 (Option.valOf value2)
         end
     and equal document1 document2 =
         case document1 of
