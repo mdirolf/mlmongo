@@ -37,8 +37,6 @@ sig
      * @param key the key to look up
      * @return the value for the given key (NONE if no value exists for key)
      *)
-    (* TODO test that valueForKey returns NONE when document doesn't contain key *)
-    (* TODO test that valueForKey returns SOME when document does contain key *)
     val valueForKey: document -> string -> value option
     (**
      * Indicates whether or not a Mongo document contains a key.

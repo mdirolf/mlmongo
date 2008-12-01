@@ -54,6 +54,7 @@ struct
         in
             MongoDoc.valueEqual value value'
         end
+    fun removeThenCheck document
 
     (* document test specs *)
     val doc = (genDoc 5, SOME MongoDoc.toString)
