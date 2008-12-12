@@ -60,7 +60,6 @@ sig
      * @param key the key to remove
      * @return a new document, with key removed if it was originally present
      *)
-    (* TODO test for this *)
     val removeKey: document -> string -> document
     (**
      * Create a Mongo document for a list of (key, value) pairs.

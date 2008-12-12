@@ -54,12 +54,18 @@ struct
         in
             MongoDoc.valueEqual value value'
         end
-    fun removeThenCheck document
+    fun removeThenCheck (document, key) =
+        let
+            val document' = MongoDoc.removeKey document key
+        in
+            Bool.not (MongoDoc.hasKey document' key)
+        end
 
     (* document test specs *)
     val doc = (genDoc 5, SOME MongoDoc.toString)
     val docPair = (Gen.zip (genDoc 5, genDoc 5), SOME (fn (x,y) => MongoDoc.toString x ^ ", " ^ MongoDoc.toString y))
     val docBindingPair = (Gen.zip (genDoc 5, Gen.zip (genString, genThickValue 5)), SOME (fn (x, (y: string, z: MongoDoc.value)) => MongoDoc.toString x ^ ", " ^ y))
+    val docKeyPair = (Gen.zip (genDoc 5, genString), SOME (fn (x, y) => MongoDoc.toString x ^ ", " ^ y))
 
     (* run the tests *)
     val _ = checkGen doc ("a document is equal to itself", pred equalToSelf)
@@ -68,6 +74,7 @@ struct
     val _ = checkGen doc ("toList contains no duplicates", pred noDups)
     val _ = checkGen docBindingPair ("removeKey o setBinding == identity", notAlreadyThere ==> setThenRemove)
     val _ = checkGen docBindingPair ("setBinding then get value", pred setThenCheck)
+    val _ = checkGen docKeyPair ("removeKey then check it's gone", trivial (fn (x, y) => Bool.not (MongoDoc.hasKey x y)) (pred removeThenCheck))
 end
 
 
