@@ -8,7 +8,7 @@ sig
     (**
      * A BSON "object".
      *)
-    type bson
+    eqtype bson
     (*
      * Create a "hex dump" representation of a bson object.
      *
@@ -60,17 +60,17 @@ struct
                 String.implode (padLeft (String.explode string) count char)
             fun printHelper lineNumber bson =
                 case bson of
-                    nil => return "\n"
+                    nil => "\n"
                   | hd::tl =>
                     let
                         val start =
                             if lineNumber mod 8 = 0 then
-                                (if lineNumber <> 0 then "\n" else ()) ^
+                                (if lineNumber <> 0 then "\n" else "") ^
                                 ((padStringLeft (Int.toString lineNumber) 4 #" ") ^ ":  ")
                             else
                                 " "
                     in
-                        return (padStringLeft (Word8.toString hd) 2 #"0") ^
+                        padStringLeft (Word8.toString hd) 2 #"0" ^
                         printHelper (lineNumber + 1) tl
                     end
         in
