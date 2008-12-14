@@ -1,9 +1,25 @@
 (* Copyright 2008 Michael Dirolf (mike@dirolf.com). All Rights Reserved. *)
-structure TestUtils =
+
+(**
+ * Utilities used for testing.
+ *
+ * Mostly test specifications for QCheck.
+ *)
+signature TEST_UTILS =
+sig
+    type 'a gen
+    type 'a spec
+    val document: MongoDoc.document spec
+    val documentPair: (MongoDoc.document * MongoDoc.document) spec
+    val documentAndBinding: (MongoDoc.document * (string * MongoDoc.value)) spec
+    val documentAndKey: (MongoDoc.document * string) spec
+    val keyValueList: ((string * MongoDoc.value) list) spec
+end
+structure TestUtils : TEST_UTILS =
 struct
     open QCheck infix ==>
-
-    (* generators *)
+    type 'a gen = QCheck.Gen.rand -> 'a * QCheck.Gen.rand
+    type 'a spec = 'a gen * ('a -> string) option
     val genString = Gen.choose #[Gen.lift "test",
                                  Gen.string (Gen.range (0, 20), Gen.charRange (#"a", #"z"))]
     val genFlatValue = Gen.choose #[Gen.map MongoDoc.Bool Gen.flip,
@@ -17,8 +33,6 @@ struct
                                    (1, Gen.map MongoDoc.Document (genDocument (n - 1)))]
     and genKeyValueList n = Gen.list Gen.flip (Gen.zip (genString, genValue n))
     and genDocument n = Gen.map MongoDoc.fromList (genKeyValueList n)
-
-    (* test specs *)
     val document = (genDocument 5, SOME MongoDoc.toString)
     val documentPair = (Gen.zip (genDocument 5, genDocument 5), SOME (fn (x,y) => MongoDoc.toString x ^ ", " ^ MongoDoc.toString y))
     val documentAndBinding = (Gen.zip (genDocument 5, Gen.zip (genString, genValue 5)), SOME (fn (x, (y: string, z: MongoDoc.value)) => MongoDoc.toString x ^ ", " ^ y))
