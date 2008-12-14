@@ -119,23 +119,13 @@ struct
         in
             List.concat [s', [zeroByte]]
         end
+    fun toList vec = Word8Vector.foldr (op ::) [] vec
     fun intToWord8List int =
         let
-            fun helper int count =
-                if count = 0 then
-                    nil
-                else
-                    if int = 0 then
-                        zeroByte::(helper 0 (count - 1))
-                    else
-                        let
-                            val word = Word8.fromInt (IntInf.toInt int)
-                            val int' = IntInf.~>> (int, Word.fromInt 8)
-                        in
-                            word::(helper int' (count - 1))
-                        end
+            val array = Word8Array.array (4, zeroByte)
         in
-            helper (Int.toLarge int) 4
+            PackWord32Little.update (array, 0, (Word32.fromInt int));
+            toList (Word8Array.vector array)
         end
     fun elementToBSON (name, element) =
         let
@@ -150,7 +140,6 @@ struct
                 in
                     helper list 0
                 end
-            fun toList vec = Word8Vector.foldr (op ::) [] vec
             val element = case element of
                               MD.Document d => fromDocument d
                             | MD.Array a => fromDocument (MD.fromList (listAsArray a))
