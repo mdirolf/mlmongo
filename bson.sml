@@ -30,6 +30,13 @@ sig
      * @return a Mongo document corresponding to that object
      *)
     val toDocument: bson -> MongoDoc.document
+    (*
+     * Get the size (in bytes) of a bson object.
+     *
+     * @param bson a bson object
+     * @return the size of the object in bytes
+     *)
+    val size: bson -> int
 end
 
 structure BSON :> BSON =
@@ -170,4 +177,5 @@ struct
             List.concat [size, objectData, [zeroByte]]
         end
     fun toDocument bson = raise UnimplementedError
+    fun size bson = length bson
 end
