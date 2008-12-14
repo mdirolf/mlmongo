@@ -9,6 +9,7 @@ signature TEST_UTILS =
 sig
     type 'a spec = 'a QCheck.Gen.gen * 'a QCheck.rep
     val document: MongoDoc.document spec
+    val repDocumentPair: (MongoDoc.document * MongoDoc.document) QCheck.rep
     val documentPair: (MongoDoc.document * MongoDoc.document) spec
     val documentAndBinding: (MongoDoc.document * (string * MongoDoc.value)) spec
     val documentAndKey: (MongoDoc.document * string) spec
@@ -33,7 +34,8 @@ struct
     and genKeyValueList n = Gen.list Gen.flip (Gen.zip (genString, genValue n))
     and genDocument n = Gen.map MongoDoc.fromList (genKeyValueList n)
     val document = (genDocument 5, SOME MongoDoc.toString)
-    val documentPair = (Gen.zip (genDocument 5, genDocument 5), SOME (fn (x,y) => MongoDoc.toString x ^ ", " ^ MongoDoc.toString y))
+    val repDocumentPair = SOME (fn (x,y) => MongoDoc.toString x ^ ", " ^ MongoDoc.toString y)
+    val documentPair = (Gen.zip (genDocument 5, genDocument 5), repDocumentPair)
     val documentAndBinding = (Gen.zip (genDocument 5, Gen.zip (genString, genValue 5)), SOME (fn (x, (y: string, z: MongoDoc.value)) => MongoDoc.toString x ^ ", " ^ y))
     val documentAndKey = (Gen.zip (genDocument 5, genString), SOME (fn (x, y) => MongoDoc.toString x ^ ", " ^ y))
     (* TODO actually print the list, instead of converting it to a document first (which removes duplicates) *)
