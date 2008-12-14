@@ -181,7 +181,7 @@ struct
                  String.concat (List.map (printBinding (indentation + 4) ",") (List.take (document, List.length document - 1))) ^
                  printBinding (indentation + 4) "" (List.last document) ^
                  indent indentation ^ "}"
-    fun toString document = (printDocument 0 document) ^ "\n"
+    fun toString document = (printDocument 0 document)
     fun valueToString value = printValue 0 value
     fun valueEqual value1 value2 =
         case value1 of
