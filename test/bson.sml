@@ -25,6 +25,10 @@ struct
                  (MongoDoc.fromList [("true", MongoDoc.Bool true)],
                   "   0:  0C 00 00 00 08 74 72 75\n   8:  65 00 01 00\n"),
                  (MongoDoc.fromList [("false", MongoDoc.Bool false)],
-                  "   0:  0D 00 00 00 08 66 61 6C\n   8:  73 65 00 00 00\n")]
+                  "   0:  0D 00 00 00 08 66 61 6C\n   8:  73 65 00 00 00\n"),
+                 (MongoDoc.fromList [("empty", MongoDoc.Array [])],
+                  "   0:  11 00 00 00 04 65 6D 70\n   8:  74 79 00 05 00 00 00 00\n  16:  00\n"),
+                 (MongoDoc.fromList [("full", MongoDoc.Array [MongoDoc.Int 5, MongoDoc.String "huh", MongoDoc.Bool true])],
+                  "   0:  26 00 00 00 04 66 75 6C\n   8:  6C 00 1B 00 00 00 10 30\n  16:  00 05 00 00 00 02 31 00\n  24:  04 00 00 00 68 75 68 00\n  32:  08 32 00 01 00 00\n")]
     val _ = check documentHexList ("documents are converted to BSON correctly", pred documentEqualsHex) tests
 end
