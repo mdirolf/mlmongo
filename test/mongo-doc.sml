@@ -11,7 +11,7 @@ struct
     fun notEqual (document1, document2) = Bool.not (MongoDoc.equal document1 document2)
     (* NOTE this isn't ALWAYS true. but things are random enough that it should be, unless both documents are empty. *)
     val _ = checkGen TestUtils.documentPair ("two random documents are not equal", notBothEmpty ==> notEqual)
-    val _ = checkOne TestUtils.repDocumentPair ("docs with one empty array not equal", pred notEqual)
+    val _ = checkOne TestUtils.repDocumentPair ("docs with different length arrays not equal", pred notEqual)
             (MongoDoc.fromList [("test", MongoDoc.Array [])],
              MongoDoc.fromList [("test", MongoDoc.Array [MongoDoc.Int 1])])
 
