@@ -67,7 +67,6 @@ sig
      * @param list a list of (key, value) pairs
      * @return a Mongo document containing those same pairs
      *)
-    (* TODO test that [d has no duplicates ==> toList (fromList d) = d] *)
     val fromList: (string * value) list -> document
     (**
      * Create a list of (key, value) pairs from a Mongo document.
@@ -79,6 +78,10 @@ sig
      * @return a list of the (key, value) pairs that make up the document
      *)
     val toList: document -> (string * value) list
+    (**
+     * Pretty print a Mongo value to a string.
+     *)
+    val valueToString: value -> string
     (**
      * Pretty print a Mongo document to a string.
      *
@@ -179,6 +182,7 @@ struct
                  printBinding (indentation + 4) "" (List.last document) ^
                  indent indentation ^ "}"
     fun toString document = (printDocument 0 document) ^ "\n"
+    fun valueToString value = printValue 0 value
     fun valueEqual value1 value2 =
         case value1 of
             Document d1 => (case value2 of
