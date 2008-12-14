@@ -70,6 +70,7 @@ struct
                             else
                                 " "
                     in
+                        start ^
                         padStringLeft (Word8.toString hd) 2 #"0" ^
                         printHelper (lineNumber + 1) tl
                     end
