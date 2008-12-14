@@ -17,6 +17,7 @@ end
 structure TestUtils :> TEST_UTILS =
 struct
     open QCheck infix ==>
+    val _ = Settings.set (Settings.column_width, 45) (* Set the QCheck column width *)
     type 'a spec = 'a QCheck.Gen.gen * 'a QCheck.rep
     val genString = Gen.choose #[Gen.lift "test",
                                  Gen.string (Gen.range (0, 20), Gen.charRange (#"a", #"z"))]
