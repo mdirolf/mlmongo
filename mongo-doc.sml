@@ -189,7 +189,10 @@ struct
                                 Document d2 => equal d1 d2
                               | _ => false)
           | Array a1 => (case value2 of
-                             Array a2 => List.all (fn (a,b) => valueEqual a b) (ListPair.zip (a1, a2))
+                             Array a2 => (List.all
+                                              (fn (a,b) => valueEqual a b)
+                                              (ListPair.zipEq (a1, a2))
+                                          handle UnequalLengths => false)
                            | _ => false)
           | Bool b1 => (case value2 of
                             Bool b2 => b1 = b2
