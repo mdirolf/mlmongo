@@ -5,3 +5,4 @@ Group is
       $/qcheck.cm
       $/basis.cm
       test/mongo-doc.sml
+      test/bson.sml
