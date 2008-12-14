@@ -3,22 +3,6 @@ structure TestMongoDoc =
 struct
     open QCheck infix ==>
 
-    (* generators *)
-    (* TODO parameterize genString (for length)? *)
-    val genString = Gen.choose #[Gen.lift "test",
-                                 Gen.string (Gen.range (0, 20), Gen.charRange (#"a", #"z"))]
-    val genFlatValue = Gen.choose #[Gen.map MongoDoc.Bool Gen.flip,
-                                    Gen.map MongoDoc.Int Gen.Int.int,
-                                    Gen.map MongoDoc.Float Gen.Real.real,
-                                    Gen.map MongoDoc.String genString
-                                  ]
-    fun genThickValue 0 = genFlatValue
-      | genThickValue n = Gen.choose' #[(4, genFlatValue),
-                                        (1, Gen.map MongoDoc.Array (Gen.list Gen.flip (genThickValue (n - 1)))),
-                                        (1, Gen.map MongoDoc.Document (genDoc (n - 1)))]
-    and genDocAsList n = Gen.list Gen.flip (Gen.zip (genString, genThickValue n))
-    and genDoc n = Gen.map MongoDoc.fromList (genDocAsList n)
-
     (* test cases *)
     fun equalToSelf document = MongoDoc.equal document document
     fun notBothEmpty (x, y) = Bool.not (MongoDoc.isEmpty x)
@@ -68,24 +52,15 @@ struct
                                                                             andalso equalList tail1 tail2
     fun fromThenToList list = equalList (MongoDoc.toList (MongoDoc.fromList list)) list
 
-    (* document test specs *)
-    val doc = (genDoc 5, SOME MongoDoc.toString)
-    val docPair = (Gen.zip (genDoc 5, genDoc 5), SOME (fn (x,y) => MongoDoc.toString x ^ ", " ^ MongoDoc.toString y))
-    val docBindingPair = (Gen.zip (genDoc 5, Gen.zip (genString, genThickValue 5)), SOME (fn (x, (y: string, z: MongoDoc.value)) => MongoDoc.toString x ^ ", " ^ y))
-    val docKeyPair = (Gen.zip (genDoc 5, genString), SOME (fn (x, y) => MongoDoc.toString x ^ ", " ^ y))
-    (* NOTE this is kind of ghetto. we should probably actually print the list as
-     * a list, not convert to a document first (which removes duplicates)... *)
-    val list = (genDocAsList 5, SOME (MongoDoc.toString o MongoDoc.fromList))
-
     (* run the tests *)
-    val _ = checkGen doc ("a document is equal to itself", pred equalToSelf)
-    val _ = checkGen docPair ("two random documents are not equal", notEqualToRandom)
-    val _ = checkGen doc ("fromList o toList == identity", pred toThenFromList)
-    val _ = checkGen doc ("toList contains no duplicates", pred noDups)
-    val _ = checkGen docBindingPair ("removeKey o setBinding == identity", notAlreadyThere ==> setThenRemove)
-    val _ = checkGen docBindingPair ("setBinding then get value", pred setThenCheck)
-    val _ = checkGen docKeyPair ("removeKey then check it's gone", trivial (fn (x, y) => Bool.not (MongoDoc.hasKey x y)) (pred removeThenCheck))
-    val _ = checkGen list ("toList o fromList == identity (if no dups)", listNoDups ==> fromThenToList)
+    val _ = checkGen TestUtils.document ("a document is equal to itself", pred equalToSelf)
+    val _ = checkGen TestUtils.documentPair ("two random documents are not equal", notEqualToRandom)
+    val _ = checkGen TestUtils.document ("fromList o toList == identity", pred toThenFromList)
+    val _ = checkGen TestUtils.document ("toList contains no duplicates", pred noDups)
+    val _ = checkGen TestUtils.documentAndBinding ("removeKey o setBinding == identity", notAlreadyThere ==> setThenRemove)
+    val _ = checkGen TestUtils.documentAndBinding ("setBinding then get value", pred setThenCheck)
+    val _ = checkGen TestUtils.documentAndKey ("removeKey then check it's gone", trivial (fn (x, y) => Bool.not (MongoDoc.hasKey x y)) (pred removeThenCheck))
+    val _ = checkGen TestUtils.keyValueList ("toList o fromList == identity (if no dups)", listNoDups ==> fromThenToList)
 end
 
 

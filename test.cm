@@ -4,5 +4,6 @@ Group is
       (* need to install qcheck for this to work... *)
       $/qcheck.cm
       $/basis.cm
+      test/test-utils.sml
       test/mongo-doc.sml
       test/bson.sml
