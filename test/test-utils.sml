@@ -7,19 +7,17 @@
  *)
 signature TEST_UTILS =
 sig
-    type 'a gen
-    type 'a spec
+    type 'a spec = 'a QCheck.Gen.gen * 'a QCheck.rep
     val document: MongoDoc.document spec
     val documentPair: (MongoDoc.document * MongoDoc.document) spec
     val documentAndBinding: (MongoDoc.document * (string * MongoDoc.value)) spec
     val documentAndKey: (MongoDoc.document * string) spec
     val keyValueList: ((string * MongoDoc.value) list) spec
 end
-structure TestUtils : TEST_UTILS =
+structure TestUtils :> TEST_UTILS =
 struct
     open QCheck infix ==>
-    type 'a gen = QCheck.Gen.rand -> 'a * QCheck.Gen.rand
-    type 'a spec = 'a gen * ('a -> string) option
+    type 'a spec = 'a QCheck.Gen.gen * 'a QCheck.rep
     val genString = Gen.choose #[Gen.lift "test",
                                  Gen.string (Gen.range (0, 20), Gen.charRange (#"a", #"z"))]
     val genFlatValue = Gen.choose #[Gen.map MongoDoc.Bool Gen.flip,
