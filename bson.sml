@@ -1,17 +1,42 @@
 (* Copyright 2008 Michael Dirolf (mike@dirolf.com). All Rights Reserved. *)
+
+(**
+ * Utilities for dealing with the BSON data format.
+ *)
 signature BSON =
 sig
-    type value
-    val print: value -> unit
-    val fromDocument: MongoDoc.document -> value
-    val toDocument: value -> MongoDoc.document
+    (**
+     * A BSON "object".
+     *)
+    type bson
+    (*
+     * Create a "hex dump" representation of a bson object.
+     *
+     * @param bson a bson document
+     * @return a string representation of the document
+     *)
+    val toString: bson -> string
+    (*
+     * Convert a Mongo document to a bson object.
+     *
+     * @param document a Mongo document
+     * @return a bson object corresponding to that document
+     *)
+    val fromDocument: MongoDoc.document -> bson
+    (*
+     * Convert a bson object to a Mongo document.
+     *
+     * @param bson a bson object
+     * @return a Mongo document corresponding to that object
+     *)
+    val toDocument: bson -> MongoDoc.document
 end
 
 structure BSON :> BSON =
 struct
     structure MD = MongoDoc
 
-    type value = Word8.word list
+    type bson = Word8.word list
     exception InternalError
     exception UnimplementedError
     val zeroByte = Word8.fromInt 0
@@ -29,21 +54,25 @@ struct
             else
                 (makeList (count - len) padding) @ list
         end
-    val print = fn bson =>
+    fun toString bson =
         let
             fun padStringLeft string count char =
                 String.implode (padLeft (String.explode string) count char)
             fun printHelper lineNumber bson =
                 case bson of
-                    nil => print "\n"
+                    nil => return "\n"
                   | hd::tl =>
-                    (if lineNumber mod 8 = 0 then
-                         (if lineNumber <> 0 then print "\n" else ();
-                          print ((padStringLeft (Int.toString lineNumber) 4 #" ") ^ ":  "))
-                     else
-                         print " ";
-                     print (padStringLeft (Word8.toString hd) 2 #"0");
-                     printHelper (lineNumber + 1) tl)
+                    let
+                        val start =
+                            if lineNumber mod 8 = 0 then
+                                (if lineNumber <> 0 then "\n" else ()) ^
+                                ((padStringLeft (Int.toString lineNumber) 4 #" ") ^ ":  ")
+                            else
+                                " "
+                    in
+                        return (padStringLeft (Word8.toString hd) 2 #"0") ^
+                        printHelper (lineNumber + 1) tl
+                    end
         in
             printHelper 0 bson
         end
@@ -139,5 +168,5 @@ struct
         in
             List.concat [size, objectData, [zeroByte]]
         end
-    fun toDocument value = raise UnimplementedError
+    fun toDocument bson = raise UnimplementedError
 end
