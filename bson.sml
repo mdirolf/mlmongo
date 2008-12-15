@@ -45,7 +45,7 @@ struct
 
     type bson = Word8.word list
     exception InternalError
-    exception UnimplementedError
+    exception NotImplementedError
     val zeroByte = Word8.fromInt 0
     fun makeList count element =
         if count = 0 then
@@ -115,7 +115,7 @@ struct
     (* TODO this ought to be UTF-8 encoded *)
     fun toCString s =
         let
-            val s' = List.map (Word8.fromInt o ord) (explode s)
+            val s' = List.map Byte.charToByte (explode s)
         in
             List.concat [s', [zeroByte]]
         end
@@ -165,6 +165,64 @@ struct
         in
             List.concat [size, objectData, [zeroByte]]
         end
-    fun toDocument bson = raise UnimplementedError
+    fun assert bool = if bool then () else raise InternalError
+    fun getInt bytes =
+        let
+            val firstFourBytes = List.take (bytes, 4) handle Subscript => raise InternalError
+            val int = Word32.toInt (PackWord32Little.subVecX (Word8Vector.fromList firstFourBytes, 0))
+            val remainder = List.drop (bytes, 4) handle Subscript => raise InternalError
+        in
+            (int, remainder)
+        end
+    fun getByte bytes =
+        let
+            val byte = hd bytes handle Empty => raise InternalError
+            val remainder = tl bytes handle Empty => raise InternalError
+        in
+            (byte, remainder)
+        end
+    (* TODO this NEEDS to handle UTF-8 *)
+    fun getCString bytes =
+        let
+            fun helper bytes string =
+                let
+                    val (byte, remainder) = getByte bytes
+                in
+                    if byte = zeroByte then
+                        (string, remainder)
+                    else
+                        helper remainder (string ^ Char.toString (Byte.byteToChar byte))
+                end
+        in
+            helper bytes ""
+        end
+    fun hydrateValue elementType bytes = raise NotImplementedError
+    fun unwrapObject bson =
+        let
+            val (size, remainder) = getInt bson
+            val last = List.last remainder
+            val elements = List.take (remainder, (length remainder) - 1) handle Subscript => raise InternalError
+        in
+            assert (last = zeroByte);
+            assert (length elements = size - 5);
+            elements
+        end
+    fun hydrateElementsHelper bytes list =
+        case bytes of
+            nil => list
+          | _ =>
+            let
+                val (elementType, remainder) = getByte bytes
+                val (key, data) = getCString remainder
+            in
+                list @ [(key, hydrateValue elementType data)]
+            end
+    fun hydrateElements bytes = hydrateElementsHelper bytes nil
+    fun toDocument bson =
+        let
+            val elements = unwrapObject bson
+        in
+            MongoDoc.fromList (hydrateElements elements)
+        end
     fun size bson = length bson
 end
