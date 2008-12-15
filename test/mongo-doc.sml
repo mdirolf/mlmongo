@@ -16,7 +16,7 @@ struct
              MongoDoc.fromList [("test", MongoDoc.Array [MongoDoc.Int 1])])
 
     fun toThenFromList document = MongoDoc.equal (MongoDoc.fromList (MongoDoc.toList document)) document
-    val _ = checkGen TestUtils.document ("fromList o toList == identity", pred toThenFromList)
+    val _ = checkGen TestUtils.document ("fromList o toList = identity", pred toThenFromList)
 
     fun contains list (elem:string) =
         case list of
@@ -40,7 +40,7 @@ struct
                                                                             andalso equalList tail1 tail2
     fun fromThenToList list = equalList (MongoDoc.toList (MongoDoc.fromList list)) list
     fun listNoDups list = noDupsHelper list nil
-    val _ = checkGen TestUtils.keyValueList ("toList o fromList == identity (if no dups)", listNoDups ==> fromThenToList)
+    val _ = checkGen TestUtils.keyValueList ("toList o fromList = identity (if no dups)", listNoDups ==> fromThenToList)
 
     fun notAlreadyThere (document, (key, value)) = Bool.not (MongoDoc.hasKey document key)
     fun setThenRemove (document, (key, value)) =
@@ -49,7 +49,7 @@ struct
         in
             MongoDoc.equal document document'
         end
-    val _ = checkGen TestUtils.documentAndBinding ("removeKey o setBinding == identity", notAlreadyThere ==> setThenRemove)
+    val _ = checkGen TestUtils.documentAndBinding ("removeKey o setBinding = identity", notAlreadyThere ==> setThenRemove)
 
     fun setThenCheck (document, (key, value)) =
         let
