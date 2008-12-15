@@ -3,9 +3,11 @@ structure TestBSON =
 struct
     open QCheck infix ==>
 
-    (* TODO actually test these predicates *)
+    (* TODO actually test this predicate *)
     fun toThenFromDocument bson = BSON.fromDocument (BSON.toDocument bson) = bson
+
     fun fromThenToDocument document = MongoDoc.equal (BSON.toDocument (BSON.fromDocument document)) document
+    val _ = checkGen TestUtils.document ("toDocument o fromDocument = identity", pred fromThenToDocument)
 
     fun showDocumentHex (document, hex) = (MongoDoc.toString document) ^ " : '" ^ hex ^ "'"
     val documentHexList = (List.getItem, SOME showDocumentHex)
