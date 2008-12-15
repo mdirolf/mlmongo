@@ -130,7 +130,7 @@ struct
     fun hasKey document key = Option.isSome (valueForKey document key)
     fun isEmpty document = List.null document
     fun removeKey (document: document) key = List.filter (fn (s, _) => s <> key) document
-    fun setBinding document (key, value) = (key, value)::(removeKey document key)
+    fun setBinding document (key, value) = (removeKey document key) @ [(key, value)]
     (* NOTE Nested documents are guaranteed to be already dedup-ed.
      * We know this since there is no way to create a document with any
      * duplicates in it. *)
