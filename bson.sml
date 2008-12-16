@@ -198,7 +198,7 @@ struct
         end
     fun hydrateValue elementType bytes =
         case elementType of
-            INT =>
+            NUMBER_INT =>
             let
                 val (int, remainder) = getInt bytes
             in
