@@ -84,34 +84,34 @@ struct
         in
             printHelper 0 bson
         end
-    fun elementTypeFromName typeName =
-        case typeName of
-            "EOO" => Word8.fromInt 0
-          | "NUMBER" => Word8.fromInt 1
-          | "STRING" => Word8.fromInt 2
-          | "OBJECT" => Word8.fromInt 3
-          | "ARRAY" => Word8.fromInt 4
-          | "BINARY" => Word8.fromInt 5
-          | "UNDEFINED" => Word8.fromInt 6
-          | "OID" => Word8.fromInt 7
-          | "BOOLEAN" => Word8.fromInt 8
-          | "DATE" => Word8.fromInt 9
-          | "NULL" => Word8.fromInt 10
-          | "REGEX" => Word8.fromInt 11
-          | "REF" => Word8.fromInt 12
-          | "CODE" => Word8.fromInt 13
-          | "SYMBOL" => Word8.fromInt 14
-          | "CODE_W_SCOPE" => Word8.fromInt 15
-          | "NUMBER_INT" => Word8.fromInt 16
-          | _ => raise InternalError
+
+    (* Some constants. *)
+    val EOO = Word8.fromInt 0
+    val NUMBER = Word8.fromInt 1
+    val STRING = Word8.fromInt 2
+    val OBJECT = Word8.fromInt 3
+    val ARRAY = Word8.fromInt 4
+    val BINARY = Word8.fromInt 5
+    val UNDEFINED = Word8.fromInt 6
+    val OID = Word8.fromInt 7
+    val BOOLEAN = Word8.fromInt 8
+    val DATE = Word8.fromInt 9
+    val NULL = Word8.fromInt 10
+    val REGEX = Word8.fromInt 11
+    val REF = Word8.fromInt 12
+    val CODE = Word8.fromInt 13
+    val SYMBOL = Word8.fromInt 14
+    val CODE_W_SCOPE = Word8.fromInt 15
+    val NUMBER_INT = Word8.fromInt 16
+
     fun elementType element =
         case element of
-            MD.Document _ => elementTypeFromName "OBJECT"
-          | MD.Array _ => elementTypeFromName "ARRAY"
-          | MD.Bool _ => elementTypeFromName "BOOLEAN"
-          | MD.Int _ => elementTypeFromName "NUMBER_INT"
-          | MD.Float _ => elementTypeFromName "NUMBER"
-          | MD.String _ => elementTypeFromName "STRING"
+            MD.Document _ => OBJECT
+          | MD.Array _ => ARRAY
+          | MD.Bool _ => BOOLEAN
+          | MD.Int _ => NUMBER_INT
+          | MD.Float _ => NUMBER
+          | MD.String _ => STRING
     (* TODO this ought to be UTF-8 encoded *)
     fun toCString s =
         let
@@ -196,7 +196,14 @@ struct
         in
             helper bytes ""
         end
-    fun hydrateValue elementType bytes = raise NotImplementedError
+    fun hydrateValue elementType bytes =
+        case elementType of
+            INT =>
+            let
+                val (int, remainder) = getInt bytes
+            in
+                (MongoDoc.Int int, remainder)
+            end
     fun unwrapObject bson =
         let
             val (size, remainder) = getInt bson
@@ -214,8 +221,9 @@ struct
             let
                 val (elementType, remainder) = getByte bytes
                 val (key, data) = getCString remainder
+                val (value, elements) = hydrateValue elementType data
             in
-                list @ [(key, hydrateValue elementType data)]
+                hydrateElementsHelper elements (list @ [(key, value)])
             end
     fun hydrateElements bytes = hydrateElementsHelper bytes nil
     fun toDocument bson =
