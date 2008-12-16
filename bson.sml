@@ -213,6 +213,26 @@ struct
             (assert (hd remainder' = zeroByte);
              (elements, tl remainder')) handle Empty => raise InternalError
         end
+    fun arrayFromDocument document =
+        let
+            fun helper document index =
+                let
+                    val key = Int.toString index
+                in
+                    if MongoDoc.hasKey document key then
+                        let
+                            val value = valOf (MongoDoc.valueForKey document key)
+                            val document' = MongoDoc.removeKey document key
+                        in
+                            value::helper document' (index + 1)
+                        end
+                    else
+                        nil
+                end
+        in
+            MongoDoc.Array (helper document 0)
+        end
+(* TODO this is hideous. couldn't get a case to work for some reason. must be something better than this... *)
     fun hydrateValue elementType bytes =
         if elementType = NUMBER_INT then
             let
@@ -254,7 +274,15 @@ struct
                                 (MongoDoc.Document document, remainder)
                             end
                         else
-                            raise InternalError
+                            if elementType = ARRAY then
+                                let
+                                    val (document, remainder) = getDocument bytes
+                                    val array = arrayFromDocument document
+                                in
+                                    (array, remainder)
+                                end
+                            else
+                                raise InternalError
     and hydrateElementsHelper bytes list =
         case bytes of
             nil => list
