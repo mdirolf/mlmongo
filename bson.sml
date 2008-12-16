@@ -197,13 +197,24 @@ struct
             helper bytes ""
         end
     fun hydrateValue elementType bytes =
-        case elementType of
-            NUMBER_INT =>
+        if elementType = NUMBER_INT then
             let
                 val (int, remainder) = getInt bytes
             in
                 (MongoDoc.Int int, remainder)
             end
+        else
+            if elementType = BOOLEAN then
+                let
+                    val (bool, remainder) = getByte bytes
+                in
+                    if bool = zeroByte then
+                        (MongoDoc.Bool false, remainder)
+                    else
+                        (MongoDoc.Bool true, remainder)
+                end
+            else
+                raise InternalError
     fun unwrapObject bson =
         let
             val (size, remainder) = getInt bson
@@ -217,14 +228,13 @@ struct
     fun hydrateElementsHelper bytes list =
         case bytes of
             nil => list
-          | _ =>
-            let
-                val (elementType, remainder) = getByte bytes
-                val (key, data) = getCString remainder
-                val (value, elements) = hydrateValue elementType data
-            in
-                hydrateElementsHelper elements (list @ [(key, value)])
-            end
+          | _ => (let
+                      val (elementType, remainder) = getByte bytes
+                      val (key, data) = getCString remainder
+                      val (value, elements) = hydrateValue elementType data
+                  in
+                      hydrateElementsHelper elements (list @ [(key, value)])
+                  end)
     fun hydrateElements bytes = hydrateElementsHelper bytes nil
     fun toDocument bson =
         let
