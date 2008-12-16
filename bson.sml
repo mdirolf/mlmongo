@@ -169,7 +169,7 @@ struct
     fun getInt bytes =
         let
             val firstFourBytes = List.take (bytes, 4) handle Subscript => raise InternalError
-            val int = Word32.toInt (PackWord32Little.subVecX (Word8Vector.fromList firstFourBytes, 0))
+            val int = Word32.toIntX (PackWord32Little.subVecX (Word8Vector.fromList firstFourBytes, 0))
             val remainder = List.drop (bytes, 4) handle Subscript => raise InternalError
         in
             (int, remainder)
