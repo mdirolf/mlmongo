@@ -196,6 +196,23 @@ struct
         in
             helper bytes ""
         end
+    fun getReal bytes =
+        let
+            val firstEightBytes = List.take (bytes, 8) handle Subscript => raise InternalError
+            val real = PackRealLittle.fromBytes (Word8Vector.fromList firstEightBytes)
+            val remainder = List.drop (bytes, 8) handle Subscript => raise InternalError
+        in
+            (real, remainder)
+        end
+    fun unwrapObject bson =
+        let
+            val (size, remainder) = getInt bson
+            val elements = List.take (remainder, size - 5) handle Subscript => raise InternalError
+            val remainder' = List.drop (remainder, size - 5) handle Subscript => raise InternalError
+        in
+            (assert (hd remainder' = zeroByte);
+             (elements, tl remainder')) handle Empty => raise InternalError
+        end
     fun hydrateValue elementType bytes =
         if elementType = NUMBER_INT then
             let
@@ -214,18 +231,31 @@ struct
                         (MongoDoc.Bool true, remainder)
                 end
             else
-                raise InternalError
-    fun unwrapObject bson =
-        let
-            val (size, remainder) = getInt bson
-            val last = List.last remainder
-            val elements = List.take (remainder, (length remainder) - 1) handle Subscript => raise InternalError
-        in
-            assert (last = zeroByte);
-            assert (length elements = size - 5);
-            elements
-        end
-    fun hydrateElementsHelper bytes list =
+                if elementType = NUMBER then
+                    let
+                        val (real, remainder) = getReal bytes
+                    in
+                        (MongoDoc.Float real, remainder)
+                    end
+                else
+                    if elementType = STRING then
+                        let
+                            val (size, remainder) = getInt bytes
+                            val (string, remainder') = getCString remainder
+                        in
+                            assert (size = String.size string + 1);
+                            (MongoDoc.String string, remainder')
+                        end
+                    else
+                        if elementType = OBJECT then
+                            let
+                                val (document, remainder) = getDocument bytes
+                            in
+                                (MongoDoc.Document document, remainder)
+                            end
+                        else
+                            raise InternalError
+    and hydrateElementsHelper bytes list =
         case bytes of
             nil => list
           | _ => (let
@@ -235,12 +265,19 @@ struct
                   in
                       hydrateElementsHelper elements (list @ [(key, value)])
                   end)
-    fun hydrateElements bytes = hydrateElementsHelper bytes nil
+    and hydrateElements bytes = hydrateElementsHelper bytes nil
+    and getDocument bytes =
+        let
+            val (elements, remainder) = unwrapObject bytes
+        in
+            (MongoDoc.fromList (hydrateElements elements), remainder)
+        end
     fun toDocument bson =
         let
-            val elements = unwrapObject bson
+            val (document, remainder) = getDocument bson
         in
-            MongoDoc.fromList (hydrateElements elements)
+            assert (length remainder = 0);
+            document
         end
     fun size bson = length bson
 end
