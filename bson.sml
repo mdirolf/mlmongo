@@ -181,17 +181,16 @@ struct
     (* TODO this NEEDS to handle UTF-8 *)
     fun getCString bytes =
         let
-            fun helper bytes string =
-                let
-                    val (byte, remainder) = getByte bytes
-                in
-                    if byte = zeroByte then
-                        (string, remainder)
-                    else
-                        helper remainder (string ^ Char.toString (Byte.byteToChar byte))
-                end
+            val (byte, remainder) = getByte bytes
         in
-            helper bytes ""
+            if byte = zeroByte then
+                ("", remainder)
+            else
+                let
+                    val (string, remainder') = getCString remainder
+                in
+                    (String.str (Byte.byteToChar byte) ^ string, remainder')
+                end
         end
     fun getReal bytes =
         let
