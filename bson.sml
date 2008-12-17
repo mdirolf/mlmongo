@@ -142,12 +142,11 @@ struct
                             | MD.Bool b => if b then [Word8.fromInt 1] else [zeroByte]
                             | MD.Int i => intToWord8List i
                             | MD.Float f => toList (PackRealLittle.toBytes f)
-                            | MD.String s =>
-                              let
-                                  val cs = toCString s
-                              in
-                                  intToWord8List (length cs) @ cs
-                              end
+                            | MD.String => (let
+                                                val cs = toCString s
+                                            in
+                                                intToWord8List (length cs) @ cs
+                                            end)
         in
             (tp::name) @ element
         end
