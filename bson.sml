@@ -47,11 +47,8 @@ struct
     exception InternalError
     exception NotImplementedError
     val zeroByte = Word8.fromInt 0
-    fun makeList count element =
-        if count = 0 then
-            nil
-        else
-            element::(makeList (count - 1) element)
+    fun makeList 0 element = nil
+      | makeList n element = element::(makeList (n-1) element)
     fun padLeft list count padding =
         let
             val len = length list
