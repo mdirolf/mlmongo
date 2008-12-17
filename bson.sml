@@ -48,7 +48,7 @@ struct
     exception NotImplementedError
     val zeroByte = Word8.fromInt 0
     fun makeList 0 element = nil
-      | makeList n element = element::(makeList (n-1) element)
+      | makeList n element = element::makeList (n-1) element
     fun padLeft list count padding =
         let
             val len = length list
@@ -133,7 +133,7 @@ struct
                     fun helper l index =
                         case l of
                             nil => nil
-                          | hd::tl => (Int.toString index, hd)::(helper tl (index + 1))
+                          | hd::tl => (Int.toString index, hd)::helper tl (index + 1)
                 in
                     helper list 0
                 end
@@ -287,7 +287,7 @@ struct
                       val (key, data) = getCString remainder
                       val (value, elements) = hydrateValue elementType data
                   in
-                      (key, value)::(hydrateElements elements)
+                      (key, value)::hydrateElements elements
                   end)
     and getDocument bytes =
         let
