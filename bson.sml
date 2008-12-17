@@ -43,9 +43,34 @@ structure BSON :> BSON =
 struct
     structure MD = MongoDoc
     type bson = Word8.word list
+    datatype elementType =
+             Real
+           | String
+           | Document
+           | Array
+           | Boolean
+           | Integer
     exception InternalError
     exception NotImplementedError
     val zeroByte = Word8.fromInt 0
+    (* These constants can be found here: http://www.10gen.com/wiki/bson *)
+    fun byteForElementType elementType =
+        Word8.fromInt (case elementType of
+                           Real => 1
+                         | String => 2
+                         | Document => 3
+                         | Array => 4
+                         | Boolean => 8
+                         | Integer => 16)
+    fun elementTypeForByte byte =
+        case Word8.toInt byte of
+            1 => Real
+          | 2 => String
+          | 3 => Document
+          | 4 => Array
+          | 8 => Boolean
+          | 16 => Integer
+          | _ => raise InternalError
     fun makeList 0 element = nil
       | makeList n element = element::makeList (n-1) element
     fun padLeft list count padding =
@@ -80,34 +105,14 @@ struct
         in
             printHelper 0 bson
         end
-
-    (* Some constants. *)
-    val EOO = Word8.fromInt 0
-    val NUMBER = Word8.fromInt 1
-    val STRING = Word8.fromInt 2
-    val OBJECT = Word8.fromInt 3
-    val ARRAY = Word8.fromInt 4
-    val BINARY = Word8.fromInt 5
-    val UNDEFINED = Word8.fromInt 6
-    val OID = Word8.fromInt 7
-    val BOOLEAN = Word8.fromInt 8
-    val DATE = Word8.fromInt 9
-    val NULL = Word8.fromInt 10
-    val REGEX = Word8.fromInt 11
-    val REF = Word8.fromInt 12
-    val CODE = Word8.fromInt 13
-    val SYMBOL = Word8.fromInt 14
-    val CODE_W_SCOPE = Word8.fromInt 15
-    val NUMBER_INT = Word8.fromInt 16
-
     fun elementType element =
         case element of
-            MD.Document _ => OBJECT
-          | MD.Array _ => ARRAY
-          | MD.Bool _ => BOOLEAN
-          | MD.Int _ => NUMBER_INT
-          | MD.Float _ => NUMBER
-          | MD.String _ => STRING
+            MD.Document _ => Document
+          | MD.Array _ => Array
+          | MD.Bool _ => Boolean
+          | MD.Int _ => Integer
+          | MD.Float _ => Real
+          | MD.String _ => String
     (* TODO this ought to be UTF-8 encoded *)
     fun toCString s =
         let
@@ -125,7 +130,7 @@ struct
         end
     fun elementToBSON (name, element) =
         let
-            val tp = elementType element
+            val typeByte = byteForElementType (elementType element)
             val name = toCString name
             fun listAsArray list =
                 let
@@ -142,13 +147,13 @@ struct
                             | MD.Bool b => if b then [Word8.fromInt 1] else [zeroByte]
                             | MD.Int i => intToWord8List i
                             | MD.Float f => toList (PackRealLittle.toBytes f)
-                            | MD.String => (let
-                                                val cs = toCString s
-                                            in
-                                                intToWord8List (length cs) @ cs
-                                            end)
+                            | MD.String s => (let
+                                                  val cs = toCString s
+                                              in
+                                                  intToWord8List (length cs) @ cs
+                                              end)
         in
-            (tp::name) @ element
+            (typeByte::name) @ element
         end
     and fromDocument document =
         let
@@ -226,57 +231,44 @@ struct
         in
             MD.Array (helper document 0)
         end
-(* TODO this is hideous. couldn't get a case to work for some reason. must be something better than this... *)
-    fun hydrateValue elementType bytes =
-        if elementType = NUMBER_INT then
-            let
-                val (int, remainder) = getInt bytes
-            in
-                (MD.Int int, remainder)
-            end
-        else
-            if elementType = BOOLEAN then
-                let
-                    val (bool, remainder) = getByte bytes
-                in
-                    if bool = zeroByte then
-                        (MD.Bool false, remainder)
-                    else
-                        (MD.Bool true, remainder)
-                end
-            else
-                if elementType = NUMBER then
-                    let
-                        val (real, remainder) = getReal bytes
-                    in
-                        (MD.Float real, remainder)
-                    end
-                else
-                    if elementType = STRING then
-                        let
-                            val (size, remainder) = getInt bytes
-                            val (string, remainder') = getCString remainder
+    fun hydrateValue typeByte bytes =
+        case elementTypeForByte typeByte of
+            Integer => (let
+                            val (int, remainder) = getInt bytes
                         in
-                            assert (size = String.size string + 1);
-                            (MD.String string, remainder')
-                        end
-                    else
-                        if elementType = OBJECT then
-                            let
-                                val (document, remainder) = getDocument bytes
-                            in
-                                (MD.Document document, remainder)
-                            end
-                        else
-                            if elementType = ARRAY then
-                                let
-                                    val (document, remainder) = getDocument bytes
-                                    val array = arrayFromDocument document
-                                in
-                                    (array, remainder)
-                                end
+                            (MD.Int int, remainder)
+                        end)
+          | Boolean => (let
+                            val (bool, remainder) = getByte bytes
+                        in
+                            if bool = zeroByte then
+                                (MD.Bool false, remainder)
                             else
-                                raise InternalError
+                                (MD.Bool true, remainder)
+                        end)
+          | Real => (let
+                         val (real, remainder) = getReal bytes
+                     in
+                         (MD.Float real, remainder)
+                     end)
+          | String => (let
+                           val (size, remainder) = getInt bytes
+                           val (string, remainder') = getCString remainder
+                       in
+                           assert (size = String.size string + 1);
+                           (MD.String string, remainder')
+                       end)
+          | Document => (let
+                             val (document, remainder) = getDocument bytes
+                         in
+                             (MD.Document document, remainder)
+                         end)
+          | Array => (let
+                          val (document, remainder) = getDocument bytes
+                          val array = arrayFromDocument document
+                      in
+                          (array, remainder)
+                      end)
     and hydrateElements bytes =
         case bytes of
             nil => nil
