@@ -42,7 +42,6 @@ end
 structure BSON :> BSON =
 struct
     structure MD = MongoDoc
-
     type bson = Word8.word list
     exception InternalError
     exception NotImplementedError
@@ -215,10 +214,10 @@ struct
                 let
                     val key = Int.toString index
                 in
-                    if MongoDoc.hasKey document key then
+                    if MD.hasKey document key then
                         let
-                            val value = valOf (MongoDoc.valueForKey document key)
-                            val document' = MongoDoc.removeKey document key
+                            val value = valOf (MD.valueForKey document key)
+                            val document' = MD.removeKey document key
                         in
                             value::helper document' (index + 1)
                         end
@@ -226,7 +225,7 @@ struct
                         nil
                 end
         in
-            MongoDoc.Array (helper document 0)
+            MD.Array (helper document 0)
         end
 (* TODO this is hideous. couldn't get a case to work for some reason. must be something better than this... *)
     fun hydrateValue elementType bytes =
@@ -234,7 +233,7 @@ struct
             let
                 val (int, remainder) = getInt bytes
             in
-                (MongoDoc.Int int, remainder)
+                (MD.Int int, remainder)
             end
         else
             if elementType = BOOLEAN then
@@ -242,16 +241,16 @@ struct
                     val (bool, remainder) = getByte bytes
                 in
                     if bool = zeroByte then
-                        (MongoDoc.Bool false, remainder)
+                        (MD.Bool false, remainder)
                     else
-                        (MongoDoc.Bool true, remainder)
+                        (MD.Bool true, remainder)
                 end
             else
                 if elementType = NUMBER then
                     let
                         val (real, remainder) = getReal bytes
                     in
-                        (MongoDoc.Float real, remainder)
+                        (MD.Float real, remainder)
                     end
                 else
                     if elementType = STRING then
@@ -260,14 +259,14 @@ struct
                             val (string, remainder') = getCString remainder
                         in
                             assert (size = String.size string + 1);
-                            (MongoDoc.String string, remainder')
+                            (MD.String string, remainder')
                         end
                     else
                         if elementType = OBJECT then
                             let
                                 val (document, remainder) = getDocument bytes
                             in
-                                (MongoDoc.Document document, remainder)
+                                (MD.Document document, remainder)
                             end
                         else
                             if elementType = ARRAY then
@@ -293,7 +292,7 @@ struct
         let
             val (elements, remainder) = unwrapObject bytes
         in
-            (MongoDoc.fromList (hydrateElements elements), remainder)
+            (MD.fromList (hydrateElements elements), remainder)
         end
     fun toDocument bson =
         let
