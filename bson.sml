@@ -280,17 +280,16 @@ struct
                                 end
                             else
                                 raise InternalError
-    and hydrateElementsHelper bytes list =
+    and hydrateElements bytes =
         case bytes of
-            nil => list
+            nil => nil
           | _ => (let
                       val (elementType, remainder) = getByte bytes
                       val (key, data) = getCString remainder
                       val (value, elements) = hydrateValue elementType data
                   in
-                      hydrateElementsHelper elements (list @ [(key, value)])
+                      (key, value)::(hydrateElements elements)
                   end)
-    and hydrateElements bytes = hydrateElementsHelper bytes nil
     and getDocument bytes =
         let
             val (elements, remainder) = unwrapObject bytes
