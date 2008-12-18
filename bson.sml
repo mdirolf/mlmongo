@@ -9,28 +9,28 @@ sig
      * A BSON "object".
      *)
     eqtype bson
-    (*
+    (**
      * Create a "hex dump" representation of a bson object.
      *
      * @param bson a bson document
      * @return a string representation of the document
      *)
     val toString: bson -> string
-    (*
+    (**
      * Convert a Mongo document to a bson object.
      *
      * @param document a Mongo document
      * @return a bson object corresponding to that document
      *)
     val fromDocument: MongoDoc.document -> bson
-    (*
+    (**
      * Convert a bson object to a Mongo document.
      *
      * @param bson a bson object
      * @return a Mongo document corresponding to that object
      *)
     val toDocument: bson -> MongoDoc.document
-    (*
+    (**
      * Get the size (in bytes) of a bson object.
      *
      * @param bson a bson object
