@@ -10,12 +10,25 @@ sig
      *)
     eqtype bson
     (**
+     * Exception raised when trying to create a BSON object from
+     * invalid data.
+     *)
+    exception InvalidBSON
+    (**
      * Create a "hex dump" representation of a bson object.
      *
      * @param bson a bson document
      * @return a string representation of the document
      *)
     val toString: bson -> string
+    (**
+     * Convert a byte vector to a bson object.
+     *
+     * @exception InvalidBSON if the byte vector is not valid BSON
+     * @param bytes a Word8Vector
+     * @return a bson object corresponding to the vector
+     *)
+    val fromBytes: Word8Vector.vector -> bson
     (**
      * Convert a Mongo document to a bson object.
      *
@@ -50,6 +63,7 @@ struct
            | Array
            | Boolean
            | Integer
+    exception InvalidBSON
     exception InternalError
     exception NotImplementedError
     val zeroByte = Word8.fromInt 0
@@ -293,4 +307,12 @@ struct
             document
         end
     fun size bson = length bson
+    fun fromBytes bytes =
+        let
+            val bson = toList bytes
+            (* TODO don't do so much work, just validate *)
+            val _ = toDocument bson handle InternalError => raise InvalidBSON
+        in
+            bson
+        end
 end
