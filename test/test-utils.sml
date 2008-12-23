@@ -14,6 +14,7 @@ sig
     val documentAndBinding: (MongoDoc.document * (string * MongoDoc.value)) spec
     val documentAndKey: (MongoDoc.document * string) spec
     val keyValueList: ((string * MongoDoc.value) list) spec
+    val word8Vector: Word8Vector.vector spec
 end
 structure TestUtils :> TEST_UTILS =
 struct
@@ -33,6 +34,8 @@ struct
                                    (1, Gen.map MongoDoc.Document (genDocument (n - 1)))]
     and genKeyValueList n = Gen.list Gen.flip (Gen.zip (genString, genValue n))
     and genDocument n = Gen.map MongoDoc.fromList (genKeyValueList n)
+    val genWord8Vector = Gen.vector Word8Vector.tabulate (Gen.range (0, 100), Gen.Word8.word)
+    val word8VectorToString = Word8Vector.foldl (fn (x, y) => y ^ (Word8.toString x) ^ ", ") ""
     val document = (genDocument 5, SOME MongoDoc.toString)
     val repDocumentPair = SOME (fn (x,y) => MongoDoc.toString x ^ ", " ^ MongoDoc.toString y)
     val documentPair = (Gen.zip (genDocument 5, genDocument 5), repDocumentPair)
@@ -40,4 +43,5 @@ struct
     val documentAndKey = (Gen.zip (genDocument 5, genString), SOME (fn (x, y) => MongoDoc.toString x ^ ", " ^ y))
     (* TODO actually print the list, instead of converting it to a document first (which removes duplicates) *)
     val keyValueList = (genKeyValueList 5, SOME (MongoDoc.toString o MongoDoc.fromList))
+    val word8Vector = (genWord8Vector, SOME word8VectorToString)
 end
