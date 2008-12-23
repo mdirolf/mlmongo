@@ -8,14 +8,12 @@ struct
 
     fun fromThenToDocument document = MongoDoc.equal (BSON.toDocument (BSON.fromDocument document)) document
     val _ = checkGen TestUtils.document ("toDocument o fromDocument = identity", pred fromThenToDocument)
-
     fun fromBytesRaises vector = (let
                                       val _ = BSON.fromBytes vector
                                   in
                                       false
                                   end) handle BSON.InvalidBSON => true
     val _ = checkGen TestUtils.word8Vector ("random bytes cannot be converted to BSON", pred fromBytesRaises)
-
     fun showDocumentHex (document, hex) = (MongoDoc.toString document) ^ " : '" ^ hex ^ "'"
     val documentHexList = (List.getItem, SOME showDocumentHex)
     fun documentEqualsHex (document, hex) = BSON.toString (BSON.fromDocument document) = hex
