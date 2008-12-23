@@ -17,16 +17,20 @@ struct
                                         true
                                     end) handle BSON.InvalidBSON => false
     val _ = check (List.getItem, SOME (Word8Vector.foldl (fn (x, y) => y ^ (Word8.toString x) ^ ", ") "")) ("valid bytes can be converted to BSON", pred fromBytesSucceeds) bsonBytes
+
     fun fromBytesFails vector = Bool.not (fromBytesSucceeds vector)
     val _ = checkGen TestUtils.word8Vector ("random bytes cannot be converted to BSON", pred fromBytesFails)
+
     fun toThenFromDocument vector = (let
                                          val bson = BSON.fromBytes vector
                                      in
                                          BSON.fromDocument (BSON.toDocument bson) = bson
                                      end)
     val _ = check (List.getItem, SOME (Word8Vector.foldl (fn (x, y) => y ^ (Word8.toString x) ^ ", ") "")) ("fromDocument o toDocument = identity", pred toThenFromDocument) bsonBytes
+
     fun fromThenToDocument document = MongoDoc.equal (BSON.toDocument (BSON.fromDocument document)) document
     val _ = checkGen TestUtils.document ("toDocument o fromDocument = identity", pred fromThenToDocument)
+
     fun showDocumentHex (document, hex) = (MongoDoc.toString document) ^ " : '" ^ hex ^ "'"
     val documentHexList = (List.getItem, SOME showDocumentHex)
     fun documentEqualsHexDump (document, hex) = BSON.toString (BSON.fromDocument document) = hex
