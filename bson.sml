@@ -311,7 +311,7 @@ struct
         let
             val bson = toList bytes
             (* TODO don't do so much work, just validate *)
-            val _ = toDocument bson handle InternalError => raise InvalidBSON
+            val _ = toDocument bson handle _ => raise InvalidBSON
         in
             bson
         end
