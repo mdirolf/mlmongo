@@ -30,6 +30,13 @@ sig
      *)
     val fromBytes: Word8Vector.vector -> bson
     (**
+     * Convert a bson object to a byte vector
+     *
+     * @param bson a bson object
+     * @return a Word8Vector.vector corresponding to that object
+     *)
+    val toBytes: bson -> Word8Vector.vector
+    (**
      * Convert a Mongo document to a bson object.
      *
      * @param document a Mongo document
@@ -315,4 +322,5 @@ struct
         in
             bson
         end
+    fun toBytes bson = Word8Vector.fromList bson
 end

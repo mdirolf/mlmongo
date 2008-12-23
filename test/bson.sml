@@ -18,6 +18,16 @@ struct
                                     end) handle BSON.InvalidBSON => false
     val _ = check (List.getItem, SOME (Word8Vector.foldl (fn (x, y) => y ^ (Word8.toString x) ^ ", ") "")) ("valid bytes can be converted to BSON", pred fromBytesSucceeds) bsonBytes
 
+    fun fromThenToBytes vector = BSON.toBytes (BSON.fromBytes vector) = vector
+    val _ = check (List.getItem, SOME (Word8Vector.foldl (fn (x, y) => y ^ (Word8.toString x) ^ ", ") "")) ("toBytes o fromBytes = identity", pred fromThenToBytes) bsonBytes
+
+    fun toThenFromBytes document = (let
+                                        val bson = BSON.fromDocument document
+                                    in
+                                        BSON.fromBytes (BSON.toBytes bson) = bson
+                                    end)
+    val _ = checkGen TestUtils.document ("fromBytes o toBytes = identity", pred toThenFromBytes)
+
     fun fromBytesFails vector = Bool.not (fromBytesSucceeds vector)
     val _ = checkGen TestUtils.word8Vector ("random bytes cannot be converted to BSON", pred fromBytesFails)
 
