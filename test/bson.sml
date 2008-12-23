@@ -3,17 +3,30 @@ structure TestBSON =
 struct
     open QCheck infix ==>
 
-    (* TODO actually test this predicate *)
-    fun toThenFromDocument bson = BSON.fromDocument (BSON.toDocument bson) = bson
-
+    val bsonBytes = List.map Word8Vector.fromList (List.map (List.map Word8.fromInt)
+                                                            [[0x05, 0x00, 0x00, 0x00, 0x00],
+                                                             [0x1B, 0x00, 0x00, 0x00, 0x02,
+                                                              0x74, 0x65, 0x73, 0x74, 0x00,
+                                                              0x0C, 0x00, 0x00, 0x00, 0x68,
+                                                              0x65, 0x6C, 0x6C, 0x6F, 0x20,
+                                                              0x77, 0x6F, 0x72, 0x6C, 0x64,
+                                                              0x00, 0x00]])
+    fun fromBytesSucceeds vector = (let
+                                        val _ = BSON.fromBytes vector
+                                    in
+                                        true
+                                    end) handle BSON.InvalidBSON => false
+    val _ = check (List.getItem, SOME (Word8Vector.foldl (fn (x, y) => y ^ (Word8.toString x) ^ ", ") "")) ("valid bytes can be converted to BSON", pred fromBytesSucceeds) bsonBytes
+    fun fromBytesFails vector = Bool.not (fromBytesSucceeds vector)
+    val _ = checkGen TestUtils.word8Vector ("random bytes cannot be converted to BSON", pred fromBytesFails)
+    fun toThenFromDocument vector = (let
+                                         val bson = BSON.fromBytes vector
+                                     in
+                                         BSON.fromDocument (BSON.toDocument bson) = bson
+                                     end)
+    val _ = check (List.getItem, SOME (Word8Vector.foldl (fn (x, y) => y ^ (Word8.toString x) ^ ", ") "")) ("fromDocument o toDocument = identity", pred toThenFromDocument) bsonBytes
     fun fromThenToDocument document = MongoDoc.equal (BSON.toDocument (BSON.fromDocument document)) document
     val _ = checkGen TestUtils.document ("toDocument o fromDocument = identity", pred fromThenToDocument)
-    fun fromBytesRaises vector = (let
-                                      val _ = BSON.fromBytes vector
-                                  in
-                                      false
-                                  end) handle BSON.InvalidBSON => true
-    val _ = checkGen TestUtils.word8Vector ("random bytes cannot be converted to BSON", pred fromBytesRaises)
     fun showDocumentHex (document, hex) = (MongoDoc.toString document) ^ " : '" ^ hex ^ "'"
     val documentHexList = (List.getItem, SOME showDocumentHex)
     fun documentEqualsHexDump (document, hex) = BSON.toString (BSON.fromDocument document) = hex
