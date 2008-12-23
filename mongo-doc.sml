@@ -54,6 +54,14 @@ sig
      *)
     val isEmpty: document -> bool
     (**
+     * Gets the size of a Mongo document.
+     *
+     * Size is determined by the number of keys in the document
+     * @param document the document to check
+     * @return an integer, the size of the document
+     *)
+    val size: document -> int
+    (**
      * Remove a key from a Mongo document.
      *
      * @param document the document to remove a key from
@@ -129,6 +137,7 @@ struct
         end
     fun hasKey document key = Option.isSome (valueForKey document key)
     fun isEmpty document = List.null document
+    fun size document = length document
     fun removeKey (document: document) key = List.filter (fn (s, _) => s <> key) document
     fun setBinding document (key, value) = (removeKey document key) @ [(key, value)]
     (* NOTE Nested documents are guaranteed to be already dedup-ed.

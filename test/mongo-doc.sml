@@ -6,11 +6,11 @@ struct
     fun equalToSelf document = MongoDoc.equal document document
     val _ = checkGen TestUtils.document ("a document is equal to itself", pred equalToSelf)
 
-    fun notBothEmpty (x, y) = Bool.not (MongoDoc.isEmpty x)
-                              orelse Bool.not (MongoDoc.isEmpty y)
+    fun notBothTiny (x, y) = Bool.not (MongoDoc.size x < 2)
+                              orelse Bool.not (MongoDoc.size y < 2)
     fun notEqual (document1, document2) = Bool.not (MongoDoc.equal document1 document2)
-    (* NOTE this isn't ALWAYS true. but things are random enough that it should be, unless both documents are empty. *)
-    val _ = checkGen TestUtils.documentPair ("two random documents are not equal", notBothEmpty ==> notEqual)
+    (* NOTE this isn't ALWAYS true. but things are random enough that it should be, unless both documents are tiny. *)
+    val _ = checkGen TestUtils.documentPair ("two random documents are not equal", notBothTiny ==> notEqual)
     val _ = checkOne TestUtils.repDocumentPair ("docs with different length arrays not equal", pred notEqual)
             (MongoDoc.fromList [("test", MongoDoc.Array [])],
              MongoDoc.fromList [("test", MongoDoc.Array [MongoDoc.Int 1])])
